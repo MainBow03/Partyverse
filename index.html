@@ -60,12 +60,88 @@
             100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
         }
         
-        /* Shield Animation */
-        .shield-pulse { animation: shieldPulse 2s infinite; }
+        /* Shield Animation Potenziata con Bagliore Continuo */
+        .shield-pulse { 
+            animation: shieldPulse 1.5s infinite ease-in-out alternate; 
+            border-color: #3b82f6 !important;
+        }
         @keyframes shieldPulse {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); border-color: rgba(59, 130, 246, 0.8); }
-            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); border-color: rgba(59, 130, 246, 0.2); }
-            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); border-color: rgba(59, 130, 246, 0.8); }
+            0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5), inset 0 0 5px rgba(59, 130, 246, 0.2); }
+            100% { box-shadow: 0 0 20px rgba(59, 130, 246, 1), inset 0 0 15px rgba(59, 130, 246, 0.6); }
+        }
+
+        /* Podium Neon Styles & Glows */
+        .podium-gold {
+            background: linear-gradient(180deg, rgba(234, 179, 8, 0.25) 0%, rgba(234, 179, 8, 0.05) 100%);
+            border: 2px solid #eab308;
+            box-shadow: 0 0 25px rgba(234, 179, 8, 0.5), inset 0 0 15px rgba(234, 179, 8, 0.2);
+        }
+        .podium-silver {
+            background: linear-gradient(180deg, rgba(148, 163, 184, 0.25) 0%, rgba(148, 163, 184, 0.05) 100%);
+            border: 2px solid #94a3b8;
+            box-shadow: 0 0 20px rgba(148, 163, 184, 0.4), inset 0 0 10px rgba(148, 163, 184, 0.15);
+        }
+        .podium-bronze {
+            background: linear-gradient(180deg, rgba(180, 83, 9, 0.25) 0%, rgba(180, 83, 9, 0.05) 100%);
+            border: 2px solid #b45309;
+            box-shadow: 0 0 15px rgba(180, 83, 9, 0.4), inset 0 0 8px rgba(180, 83, 9, 0.1);
+        }
+        .animate-rise {
+            animation: riseUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+        }
+        @keyframes riseUp {
+            0% { transform: translateY(80px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Screen Shake (Terremoto Visivo) */
+        .screen-shake {
+            animation: screenShake 0.4s ease-in-out;
+        }
+        @keyframes screenShake {
+            0%, 100% { transform: translate(0, 0); }
+            10%, 30%, 50%, 70%, 90% { transform: translate(-4px, -2px) rotate(-0.5deg); }
+            20%, 40%, 60%, 80% { transform: translate(4px, 2px) rotate(0.5deg); }
+        }
+
+        /* Neon Particle Sparks (Scintille di Danno) */
+        .damage-spark {
+            position: absolute;
+            pointer-events: none;
+            width: 6px;
+            height: 6px;
+            background-color: #ff2a85;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #ff2a85, 0 0 15px #e94560;
+            animation: sparkOut 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+        @keyframes sparkOut {
+            0% { transform: translate(-50%, -50%) translate(0, 0) scale(1.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* Cyberpunk Cards Animations */
+        .cyber-card {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+            cursor: pointer;
+        }
+        .cyber-card:hover {
+            transform: translateY(-15px) scale(1.05);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Matrix/Grid digital rain scanlines */
+        .scanlines {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.06),
+                rgba(0, 255, 0, 0.02),
+                rgba(0, 0, 255, 0.06)
+            );
+            background-size: 100% 4px, 6px 100%;
         }
     </style>
 </head>
@@ -73,19 +149,17 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // ==========================================
-        // CONFIGURAZIONE DATI E FIREBASE
-        // ==========================================
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyA1dOvKH1d-SEq41GxS0zHb6hCBdqyiftQ",
-            authDomain: "partyverse-be096.firebaseapp.com",
-            projectId: "partyverse-be096",
-            storageBucket: "partyverse-be096.firebasestorage.app",
-            messagingSenderId: "428719591612",
-            appId: "1:428719591612:web:3bce74f6e640ad5f3300b9",
-            measurementId: "G-BECN41CK1W"
-        };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "AIzaSyA1dOvKH1d-SEq41GxS0zHb6hCBdqyiftQ",
+                authDomain: "partyverse-be096.firebaseapp.com",
+                projectId: "partyverse-be096",
+                storageBucket: "partyverse-be096.firebasestorage.app",
+                messagingSenderId: "428719591612",
+                appId: "1:428719591612:web:3bce74f6e640ad5f3300b9",
+                measurementId: "G-BECN41CK1W"
+            };
 
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -103,7 +177,7 @@
           { name: "Kagami", img: "https://i.pinimg.com/736x/56/e2/ad/56e2adc6421c613a6d00b393abd1a6c1.jpg" },
           { name: "Re Julien", img: "https://i.pinimg.com/736x/1e/17/19/1e17194ef5b383e4202fbb4875cfbd81.jpg" },
           { name: "Mortino", img: "https://i.pinimg.com/736x/b9/56/ec/b956ec4741a1ba90c7176478e203f78b.jpg" },
-          { name: "Skipper", img: "https://i.pinimg.com/736x/e6/f0/5b/e6f05b20dda962344721db983c882679.jpg" },
+          { name: "Skipper", img: "https://i.pinimg.com/736x/e6/f0/5b/e6f05b20dda962344721gen983c882679.jpg" },
           { name: "Kowalski", img: "https://i.pinimg.com/736x/e7/bc/38/e7bc382c57bfb2f3de7f44a0cce39fcd.jpg" },
           { name: "Soldato", img: "https://i.pinimg.com/1200x/5e/3f/0d/5e3f0d06b262dc18869f550806d1bdb4.jpg" },
           { name: "Baby Soldato", img: "https://i.pinimg.com/736x/81/3c/57/813c57fcb969d58fac1672594da05532.jpg" },
@@ -214,7 +288,7 @@
           { name: "Will", img: "https://i.pinimg.com/originals/88/80/73/8880736b5695844044e0e38c8063a1ff.gif" },
           { name: "Carlos Oliveira", img: "https://i.pinimg.com/originals/32/0d/d1/320dd13031f1aba8a2d3d9b9837174f4.gif" },
           { name: "Leon", img: "https://i.pinimg.com/736x/db/ef/fc/dbeffc6e915a929f7dbe908390f5af42.jpg" },
-          { name: "Spongebob", img: "https://i.pinimg.com/originals/4c/74/21/4c742132b3f7018e49ae1901a2ab3e68.gif" },
+          { name: "Spongebob", img: "https://media.tenor.com/4c742132b3f7018e49ae1901a2ab3e68/tenor.gif" },
           { name: "Patrick", img: "https://i.pinimg.com/736x/cc/45/b5/cc45b504e5bba418a3621d894a7693d6.jpg" },
           { name: "Squiddi", img: "https://i.pinimg.com/originals/bb/9a/08/bb9a082dd1a1a8f49200b8f5e5392d23.gif" },
           { name: "Mr Krab", img: "https://i.pinimg.com/1200x/74/9c/f5/749cf53dd48dbb440fcde8d958c7dbb1.jpg" },
@@ -234,7 +308,7 @@
           { name: "Ghostface", img: "https://i.pinimg.com/736x/a3/14/c4/a314c4596b6c929a375ff3355e2360ca.jpg" },
           { name: "Lloyd", img: "https://i.pinimg.com/736x/a9/75/93/a9759377f535489205ee8458a508db79.jpg" },
           { name: "Kai", img: "https://i.pinimg.com/1200x/ea/9d/97/ea9d97dd2a54c3d0aa13ca67e0b4864d.jpg" },
-          { name: "Sensei WU", img: " https://i.pinimg.com/1200x/65/7e/86/657e8647544d634ac721a0ee06a55e6c.jpg" },
+          { name: "Sensei WU", img: "https://i.pinimg.com/1200x/65/7e/86/657e8647544d634ac721a0ee06a55e6c.jpg" },
           { name: "Po", img: "https://i.pinimg.com/736x/fb/99/a5/fb99a5c7ce5b313ed1c4e71ee0260a9b.jpg" },
           { name: "Shifu", img: "https://i.pinimg.com/736x/c8/90/f3/c890f3dcf69372cd5ef3c68aad711bb9.jpg" },
           { name: "Mimikyu", img: "https://i.pinimg.com/1200x/7f/c3/98/7fc3984347358acee07cf91f2ed1d0ff.jpg" },
@@ -246,6 +320,39 @@
         ];
 
         const { useState, useEffect, useRef } = React;
+        
+        // Hook customizzato per sincronizzare in tempo reale lo stato delle stanze tramite Firestore
+        const useRoom = (roomId, user) => {
+            const [data, setData] = useState(null);
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                if (!roomId || !user) {
+                    setData(null);
+                    setLoading(false);
+                    return;
+                }
+                setLoading(true);
+                const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomId);
+                const unsubscribe = docRef.onSnapshot(
+                    (doc) => {
+                        if (doc.exists) {
+                            setData(doc.data());
+                        } else {
+                            setData(null);
+                        }
+                        setLoading(false);
+                    },
+                    (error) => {
+                        console.error("Errore nel recupero della stanza:", error);
+                        setLoading(false);
+                    }
+                );
+                return () => unsubscribe();
+            }, [roomId, user]);
+
+            return { data, loading };
+        };
         
         // --- ICONS (Inline SVG) ---
         const Users = ({size = 24, className = ""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
@@ -259,558 +366,164 @@
         const Zap = ({size = 24, className = ""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
         const CheckCircle = ({size = 24, className = ""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
         const Bomb = ({size = 24, className = ""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M12 2a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5v0a5 5 0 0 1-5-5v0a5 5 0 0 1 5-5z" fill="black"/><path d="M14.5 9a2.5 2.5 0 0 0-5 0" stroke="white"/><path d="M12 2V0"/><path d="M15 3l2-2"/><path d="M9 3L7 1"/></svg>;
+        const Crown = ({size = 24, className = ""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 4 5 12h14l3-8-7 4-3-6-3 6-7-4z"/><path d="M5 20h14a2 2 0 0 0 2-2v-2H3v2a2 2 0 0 0 2 2z"/></svg>;
         const Eye = ({size = 24, className = ""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
         const Brain = ({size = 24, className = ""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>;
         const Dices = ({size = 24, className = ""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 8h.01"/><path d="M8 8h.01"/><path d="M8 16h.01"/><path d="M16 16h.01"/><path d="M12 12h.01"/></svg>;
         const Shield = ({size = 24, className = ""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
         const Power = ({size=24, className=""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>;
+        const AlertCircle = ({size = 24, className = ""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+        const BookOpen = ({size = 24, className = ""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
 
-        function useRoom(roomId, user) {
-            const [data, setData] = useState(null);
-            const [loading, setLoading] = useState(true);
-
-            useEffect(() => {
-                if (!roomId || !user) return;
-                const unsub = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomId)
-                    .onSnapshot(doc => {
-                        if (doc.exists) setData(doc.data());
-                        else setData(null);
-                        setLoading(false);
-                    }, err => console.error(err));
-                return unsub;
-            }, [roomId, user]);
-            
-            return { data, loading };
-        }
-
-        const PlayerBadge = ({ player, isCurrentTurn, isWinner, onClick, canBeTargeted, maxHp }) => {
-            const getHpColor = (current, max) => {
-                const percentage = (current / max) * 100;
-                if (percentage > 75) return 'bg-green-800'; 
-                if (percentage > 50) return 'bg-green-500';
-                if (percentage > 25) return 'bg-orange-500'; 
-                if (percentage > 10) return 'bg-red-500';
-                return 'bg-red-900'; 
-            }
-
-            return (
-                <div 
-                    onClick={() => canBeTargeted && onClick && onClick(player)}
-                    className={`relative flex flex-col items-center p-2 rounded-xl transition-all duration-300
-                        ${isCurrentTurn ? 'bg-yellow-500/20 border-2 border-yellow-500 z-10 scale-105' : 'glass-panel'} 
-                        ${player.status === 'ELIMINATED' ? 'opacity-40 grayscale' : ''}
-                        ${canBeTargeted ? 'cursor-pointer hover:bg-red-500/30 hover:scale-110 hover:border-red-500 animate-pulse border-2 border-red-500/50' : ''}
-                        ${player.invulnerable ? 'shield-pulse border-2 border-blue-500' : ''}
-                    `}
-                >
-                    {isWinner && <div className="absolute -top-4 text-yellow-400"><Trophy size={32} /></div>}
-                    {player.invulnerable && <div className="absolute top-0 left-0 text-blue-400 z-20 bg-black/50 rounded-full p-1"><Shield size={16} /></div>}
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/20 mb-2 relative">
-                        <img src={player.img} alt={player.name} className="w-full h-full object-cover" onError={(e) => e.target.src='https://via.placeholder.com/64?text=?'}/>
-                        {player.status === 'ELIMINATED' && <div className="absolute inset-0 bg-black/70 flex items-center justify-center text-red-500"><Skull /></div>}
-                    </div>
-                    <div className="text-xs font-bold text-center truncate w-full">{player.name}</div>
-                    <div className="flex gap-1 mt-1 text-xs">
-                        {player.hp !== undefined && <span className={`${getHpColor(player.hp, maxHp || 50)} px-1 rounded text-white transition-colors`}>HP {player.hp}</span>}
-                        {player.score !== undefined && <span className="bg-blue-500/80 px-1 rounded text-white">PT {player.score}</span>}
-                    </div>
-                    {player.isCpu && <span className="absolute top-0 right-0 bg-purple-600 text-[10px] px-1 rounded-bl">CPU</span>}
-                </div>
-            );
-        }
-
-        // ... existing SurvivalGame component ...
-        const SurvivalGame = ({ room, user, updateRoom }) => {
-            const [turnPhase, setTurnPhase] = useState('ROLL');
-            const [currentDamage, setCurrentDamage] = useState(0);
-            const [rolling, setRolling] = useState(false);
-
-            const currentPlayer = room.players[room.gameData.currentTurnIndex];
-            const isMyTurn = currentPlayer.id === user.uid;
-            const isHost = room.hostId === user.uid;
-
-            // --- LOGICA CPU ---
-            useEffect(() => {
-                if (room.gameData.roundSummary) return;
-
-                if (currentPlayer.isCpu && isHost && room.status === 'PLAYING') {
-                    const cpuTurn = async () => {
-                        await new Promise(r => setTimeout(r, 1000));
-                        const roll = Math.ceil(Math.random() * 6);
-                        const validTargets = room.players
-                            .map((p, index) => ({...p, originalIndex: index}))
-                            .filter(p => p.status !== 'ELIMINATED' && p.id !== currentPlayer.id);
-                        
-                        if (validTargets.length === 0) return;
-                        const randomTarget = validTargets[Math.floor(Math.random() * validTargets.length)];
-                        await executeAttack(roll, randomTarget.originalIndex, `CPU ${currentPlayer.name}`);
-                    };
-                    cpuTurn();
-                }
-            }, [room.gameData.currentTurnIndex, room.status, room.gameData.roundSummary]);
-
-            const executeAttack = async (damage, targetIndex, attackerName) => {
-                let newPlayers = [...room.players];
-                const target = newPlayers[targetIndex];
-                const attacker = newPlayers[room.gameData.currentTurnIndex];
+        const playSynthSound = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
                 
-                target.hp -= damage;
-                target.damageTakenRound = (target.damageTakenRound || 0) + damage;
-                attacker.score = (attacker.score || 0) + damage;
-
-                let logMsg = `${attackerName} ha inflitto ${damage} danni a ${target.name}!`;
-
-                if (target.hp <= 0) {
-                    target.hp = 0;
-                    target.status = 'ELIMINATED';
-                    target.eliminatedRound = room.gameData.round;
-                    logMsg += " ELIMINATO!";
+                if (type === 'shield') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.6);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.6);
+                } else if (type === 'attack') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(600, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.5);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.5);
+                } else if (type === 'heal') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(260, ctx.currentTime);
+                    osc.frequency.setValueAtTime(520, ctx.currentTime + 0.15);
+                    osc.frequency.setValueAtTime(1040, ctx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.5);
+                } else if (type === 'sabotage') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(180, ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(45, ctx.currentTime + 0.6);
+                    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.6);
+                } else if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.15);
                 }
-
-                const survivors = newPlayers.filter(p => p.status !== 'ELIMINATED');
-                let nextStatus = 'PLAYING';
-                let winnerId = null;
-
-                if (survivors.length <= 1) {
-                    nextStatus = 'GAME_OVER';
-                    winnerId = survivors[0]?.id;
-                    logMsg = `${survivors[0]?.name} HA VINTO LA BATTAGLIA!`;
-                }
-
-                let nextIndex = room.gameData.currentTurnIndex;
-                let loops = 0;
-                let currentRound = room.gameData.round;
-                let roundSummary = room.gameData.roundSummary || null;
-
-                do {
-                    nextIndex = (nextIndex + 1) % newPlayers.length;
-                    
-                    if(nextIndex === 0) {
-                        currentRound++;
-                        const damageRanking = newPlayers
-                            .filter(p => (p.damageTakenRound || 0) > 0)
-                            .sort((a,b) => b.damageTakenRound - a.damageTakenRound)
-                            .slice(0, 3)
-                            .map(p => ({
-                                name: p.name,
-                                img: p.img,
-                                damageTakenRound: p.damageTakenRound
-                            }));
-                        
-                        roundSummary = damageRanking.length > 0 ? damageRanking : null;
-                        newPlayers.forEach(p => p.damageTakenRound = 0);
-                    }
-                    loops++;
-                } while (newPlayers[nextIndex].status === 'ELIMINATED' && survivors.length > 1 && loops < newPlayers.length * 2);
-
-                await updateRoom({
-                    players: newPlayers,
-                    status: nextStatus,
-                    gameData: {
-                        ...room.gameData,
-                        currentTurnIndex: nextIndex,
-                        round: currentRound,
-                        lastAction: logMsg,
-                        lastRoll: damage,
-                        roundSummary: roundSummary
-                    },
-                    winnerId: winnerId
-                });
-            };
-
-            const handleHumanRoll = async () => {
-                if (rolling) return;
-                setRolling(true);
-                await new Promise(r => setTimeout(r, 600));
-                const roll = Math.ceil(Math.random() * 6);
-                setCurrentDamage(roll);
-                setTurnPhase('TARGET');
-                setRolling(false);
-            };
-
-            const handleTargetClick = (targetPlayer) => {
-                const targetIndex = room.players.findIndex(p => p.id === targetPlayer.id);
-                if (targetIndex === -1) return;
-                setTurnPhase('ROLL');
-                setCurrentDamage(0);
-                executeAttack(currentDamage, targetIndex, currentPlayer.name);
-            };
-
-            const dismissRoundSummary = async () => {
-                await updateRoom({
-                    gameData: { ...room.gameData, roundSummary: null }
-                });
-            };
-
-            const RoundSummaryBanner = () => {
-                if (!room.gameData.roundSummary) return null;
-                return (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-                        <div className="bg-[#1a1a2e] border-2 border-red-500 rounded-2xl p-6 w-full max-w-md animate-bounce-in shadow-2xl shadow-red-500/50 flex flex-col items-center">
-                            <div className="text-red-500 font-bold text-2xl mb-2 flex items-center gap-2">
-                                <Skull size={32} /> MASSACRO ROUND {room.gameData.round - 1}
-                            </div>
-                            <div className="w-full space-y-3 mb-6">
-                                {room.gameData.roundSummary.map((p, i) => (
-                                    <div key={i} className="flex items-center justify-between bg-white/5 p-3 rounded-lg border border-white/10">
-                                        <div className="flex items-center gap-3">
-                                            <span className="font-bold text-yellow-500 text-xl">#{i+1}</span>
-                                            <img src={p.img} className="w-10 h-10 rounded-full border border-white/20" />
-                                            <span className="font-bold">{p.name}</span>
-                                        </div>
-                                        <div className="font-bold text-red-400 text-xl">
-                                            -{p.damageTakenRound} HP
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            
-                            {isHost ? (
-                                <button 
-                                    onClick={dismissRoundSummary}
-                                    className="bg-green-600 hover:bg-green-500 px-8 py-3 rounded-xl font-bold text-lg flex items-center gap-2 transition-transform hover:scale-105"
-                                >
-                                    <CheckCircle /> PROSEGUI ROUND
-                                </button>
-                            ) : (
-                                <div className="text-gray-400 animate-pulse text-center">
-                                    L'Host sta analizzando i danni...
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-            };
-
-            const Leaderboard = () => {
-                const sortedPlayers = [...room.players].sort((a, b) => {
-                    if (a.id === room.winnerId) return -1;
-                    if (b.id === room.winnerId) return 1;
-                    if (a.eliminatedRound !== b.eliminatedRound) {
-                        return (b.eliminatedRound || 0) - (a.eliminatedRound || 0);
-                    }
-                    return b.score - a.score;
-                });
-
-                return (
-                    <div className="w-full bg-black/40 p-4 rounded-xl mt-4">
-                        <h3 className="text-xl font-bold mb-2 text-yellow-400 text-center">Classifica Finale</h3>
-                        <div className="space-y-2">
-                            {sortedPlayers.map((p, i) => (
-                                <div key={i} className="flex items-center justify-between bg-white/5 p-2 rounded">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold w-6">{i + 1}°</span>
-                                        <img src={p.img} className="w-8 h-8 rounded-full"/>
-                                        <span>{p.name}</span>
-                                    </div>
-                                    <div className="text-sm text-gray-300">
-                                        {p.id === room.winnerId ? <span className="text-green-400 font-bold">VINCITORE</span> : `Eliminato Round ${p.eliminatedRound || '-'}`}
-                                        <span className="ml-3 text-blue-400">({p.score} danni)</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            };
-
-            return (
-                <div className="flex flex-col items-center gap-6 w-full max-w-3xl">
-                    <div className="text-2xl font-bold text-center text-red-400 flex items-center gap-2"><Skull /> Battle Royale (Max HP: {room.config?.initialHp || 50})</div>
-                    
-                    {room.status === 'PLAYING' && <RoundSummaryBanner />}
-
-                    <div className="glass-panel p-4 rounded text-center w-full min-h-[60px] flex flex-col items-center justify-center">
-                        <div className="text-lg">{room.gameData.lastAction || "Preparatevi a combattere!"}</div>
-                        {isMyTurn && turnPhase === 'TARGET' && (
-                            <div className="text-yellow-400 font-bold animate-pulse mt-1">
-                                HAI FATTO {currentDamage}! SELEZIONA CHI COLPIRE!
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 w-full">
-                        {room.players.map((p, i) => {
-                            const isTargetable = isMyTurn && turnPhase === 'TARGET' && p.status !== 'ELIMINATED' && p.id !== user.uid;
-                            return (
-                                <PlayerBadge 
-                                    key={i} 
-                                    player={p} 
-                                    isCurrentTurn={i === room.gameData.currentTurnIndex} 
-                                    isWinner={room.winnerId === p.id}
-                                    canBeTargeted={isTargetable}
-                                    onClick={isTargetable ? handleTargetClick : null}
-                                    maxHp={room.config?.initialHp || 50}
-                                />
-                            );
-                        })}
-                    </div>
-
-                    {room.status === 'PLAYING' && (
-                        <div className="flex flex-col items-center mt-4 h-24 justify-end">
-                            <div className="text-xl mb-4 text-yellow-300">
-                                Turno di: <span className="font-bold">{currentPlayer.name}</span>
-                            </div>
-                            {isMyTurn && turnPhase === 'ROLL' && (
-                                <button onClick={handleHumanRoll} disabled={rolling} className={`px-8 py-4 rounded-full font-bold text-xl flex items-center gap-3 transition-all ${rolling ? 'bg-gray-600 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 shadow-lg hover:shadow-red-500/50'}`}>
-                                    <span className={rolling ? "dice-roll" : ""}>🎲</span> {rolling ? "Tirando..." : "TIRA PER ATTACCARE"}
-                                </button>
-                            )}
-                            {isMyTurn && turnPhase === 'TARGET' && <div className="text-gray-300 text-sm">Clicca sull'immagine di un avversario per attaccare.</div>}
-                            {!isMyTurn && <p className="text-gray-400 animate-pulse">In attesa della mossa...</p>}
-                        </div>
-                    )}
-
-                    {room.status === 'GAME_OVER' && (
-                        <>
-                            <Leaderboard />
-                            {room.hostId === user.uid && (
-                                <button onClick={() => updateRoom({ status: 'LOBBY', winnerId: null })} className="bg-green-600 hover:bg-green-500 px-6 py-2 rounded mt-6">
-                                    Torna alla Lobby
-                                </button>
-                            )}
-                        </>
-                    )}
-                </div>
-            );
+            } catch(e) {
+                console.warn("Audio Context blocked by browser autoplay rules");
+            }
         };
 
-        const CursedDiceGame = ({ room, user, updateRoom }) => {
+        const CYBER_CARDS = [
+          { id: 1, name: "Laser al Plasma", type: "ATTACK", icon: "🔴", desc: "Infligge 6 danni diretti a un avversario a scelta.", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 2, name: "Sanguisuga Digitale", type: "ATTACK", icon: "🔴", desc: "Ruba 4 HP a un avversario e li aggiunge ai tuoi HP (fino al limite max).", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 3, name: "Colpo Critico 404", type: "ATTACK", icon: "🔴", desc: "Probabilità del 50% di infliggere 10 danni, altrimenti non fa nulla.", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 4, name: "Cannone a Risonanza", type: "ATTACK", icon: "🔴", desc: "Infligge 5 danni al bersaglio e 2 danni ai giocatori adiacenti in partita.", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 5, name: "Overclock Offensivo", type: "ATTACK", icon: "🔴", desc: "Sacrifica 3 tuoi HP per infliggere 8 danni a un avversario.", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 6, name: "Algoritmo Mietitore", type: "ATTACK", icon: "🔴", desc: "Infligge danni pari al numero di carte nella mano del bersaglio x 2.", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 7, name: "Sisma Elettronico", type: "ATTACK_ALL", icon: "🔴", desc: "Infligge 1 danno a tutti e costringe ognuno a scartare una carta casuale.", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 8, name: "Rete di Spine", type: "ATTACK", icon: "🔴", desc: "Infligge 2 danni immediati. Per 2 round, quando gioca subisce altri 2 danni.", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 9, name: "Pugno in Faccia", type: "ATTACK", icon: "🔴", desc: "Infligge 3 danni diretti e incontestabili (ignora scudi).", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 10, name: "Sciame di Vespe", type: "ATTACK_ALL", icon: "🔴", desc: "Infligge 2 danni a 3 giocatori a tua scelta (scelti casualmente).", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 11, name: "Calcio", type: "ATTACK", icon: "🔴", desc: "Infligge 3 danni e manda in frantumi lo scudo/invulnerabilità avversaria!", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 12, name: "Firewall Laser", type: "BUFF", icon: "🔵", desc: "Ti rende completamente invulnerabile per l'intero round.", color: "border-blue-500 bg-blue-950/40 text-blue-200" },
+          { id: 13, name: "Scudo a Specchio", type: "BUFF", icon: "🔵", desc: "Se vieni attaccato in questo round, rifletti interamente i danni al mittente.", color: "border-blue-500 bg-blue-950/40 text-blue-200" },
+          { id: 14, name: "Nano-Iniezione", type: "HEAL", icon: "🟢", desc: "Recuperi immediatamente 8 HP.", color: "border-green-500 bg-green-950/40 text-green-200" },
+          { id: 15, name: "Patch di Sicurezza", type: "HEAL", icon: "🟢", desc: "Cura 5 HP e rimuove qualsiasi effetto negativo (Spine o Malus).", color: "border-green-500 bg-green-950/40 text-green-200" },
+          { id: 16, name: "Barriera Condivisa", type: "BUFF_SELECT", icon: "🔵", desc: "Protegge te e un altro giocatore a scelta per 1 round.", color: "border-blue-500 bg-blue-950/40 text-blue-200" },
+          { id: 17, name: "Rigeneratore di Celle", type: "BUFF", icon: "🟢", desc: "Cura +2 HP all'inizio di ogni tuo turno per i prossimi 4 turni.", color: "border-green-500 bg-green-950/40 text-green-200" },
+          { id: 18, name: "DDoS Attack", type: "SABOTAGE", icon: "🟡", desc: "Impedisce a un giocatore a scelta di giocare carte nel suo prossimo turno.", color: "border-yellow-500 bg-yellow-950/40 text-yellow-200" },
+          { id: 19, name: "Riavvio Forzato", type: "SABOTAGE", icon: "🟣", desc: "Costringe un avversario a scartare la mano e pescare 3 nuove carte.", color: "border-purple-500 bg-purple-950/40 text-purple-200" },
+          { id: 20, name: "Keylogger", type: "SABOTAGE", icon: "🟣", desc: "Spia la mano dell'avversario a scelta per i prossimi 2 round.", color: "border-purple-500 bg-purple-950/40 text-purple-200" },
+          { id: 21, name: "Roulette Russa", type: "RNG", icon: "🌀", desc: "Dado virtuale: 1-3 subisci 5 danni tu, 4-6 subisce 10 danni l'avversario.", color: "border-cyan-500 bg-cyan-950/40 text-cyan-200" },
+          { id: 22, name: "Tempesta EMP", type: "RNG_ALL", icon: "🌀", desc: "Disattiva i dati olografici! Per un round nessuno può vedere i nomi delle proprie carte.", color: "border-cyan-500 bg-cyan-950/40 text-cyan-200" },
+          { id: 23, name: "L'Ira dei Pincher", type: "RNG_ALL", icon: "🌀", desc: "Scatena 4 effetti casuali diversi sui 4 giocatori della partita.", color: "border-cyan-500 bg-cyan-950/40 text-cyan-200" },
+          { id: 24, name: "Specchio del Destino", type: "RNG_ALL", icon: "🌀", desc: "Chi ha attualmente più HP scambia la sua vita con chi ne ha meno.", color: "border-cyan-500 bg-cyan-950/40 text-cyan-200" }
+        ];
+
+        // Componente di gioco per la modalità Sopravvivenza Classica
+        const SurvivalGame = ({ room, user, updateRoom }) => {
             const [rolling, setRolling] = useState(false);
-            const [phase, setPhase] = useState('ROLL'); // ROLL, CHOICE, TARGET
-            const [rollVal, setRollVal] = useState(null);
-            const [targets, setTargets] = useState([]);
-            const [subAction, setSubAction] = useState(null); // 'ATTACK', 'HEAL' for face 6
-
+            const [diceValue, setDiceValue] = useState(null);
+            
             const currentPlayer = room.players[room.gameData.currentTurnIndex];
-            const isMyTurn = currentPlayer.id === user.uid;
+            const isMyTurn = currentPlayer?.id === user.uid;
             const isHost = room.hostId === user.uid;
-
-            // --- LEADERBOARD COMPONENT (Copia da Survival) ---
-            const Leaderboard = () => {
-                const sortedPlayers = [...room.players].sort((a, b) => {
-                    if (a.id === room.winnerId) return -1;
-                    if (b.id === room.winnerId) return 1;
-                    if (a.eliminatedRound !== b.eliminatedRound) {
-                        return (b.eliminatedRound || 0) - (a.eliminatedRound || 0);
-                    }
-                    return (b.hp || 0) - (a.hp || 0); // Tie-break con HP residui se morti nello stesso round (raro) o 0
-                });
-
-                return (
-                    <div className="w-full bg-black/40 p-4 rounded-xl mt-4">
-                        <h3 className="text-xl font-bold mb-2 text-yellow-400 text-center">Classifica Finale</h3>
-                        <div className="space-y-2">
-                            {sortedPlayers.map((p, i) => (
-                                <div key={i} className="flex items-center justify-between bg-white/5 p-2 rounded">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold w-6">{i + 1}°</span>
-                                        <img src={p.img} className="w-8 h-8 rounded-full border border-white/10"/>
-                                        <span>{p.name}</span>
-                                    </div>
-                                    <div className="text-sm text-gray-300">
-                                        {p.id === room.winnerId ? <span className="text-green-400 font-bold">VINCITORE</span> : `Eliminato Round ${p.eliminatedRound || '-'}`}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            };
-
-            const DICE_FACES = {
-                1: { label: "💀 SACRIFICIO", desc: "-3 HP a te stesso", type: "IMMEDIATE" },
-                2: { label: "🗡️ COLPO", desc: "-5 HP a un avversario", type: "TARGET", maxTargets: 1 },
-                3: { label: "⚔️ MULTI-COLPO", desc: "-2 HP a 3 avversari", type: "TARGET", maxTargets: 3 },
-                4: { label: "❤️ CURA", desc: "+2 HP", type: "IMMEDIATE" },
-                5: { label: "🎯 CECCHINO", desc: "-8 HP a un avversario", type: "TARGET", maxTargets: 1 },
-                6: { label: "☯️ KARMA", desc: "Attacca o Cura+Cura", type: "CHOICE" },
-                7: { label: "🧨 ESPLOSIONE", desc: "-3 HP a 2 avversari", type: "TARGET", maxTargets: 2 },
-                8: { label: "🛡️ SCUDO", desc: "Invulnerabile fino al prossimo turno", type: "IMMEDIATE" },
-                9: { label: "🔪 PUGNALE", desc: "-4 HP a un avversario", type: "TARGET", maxTargets: 1 }
-            };
 
             const handleRoll = async () => {
                 if (rolling) return;
                 setRolling(true);
-                setRollVal(null);
-                setTargets([]);
-                setSubAction(null);
+                playSynthSound('click');
 
-                await new Promise(r => setTimeout(r, 1000));
-                
-                const result = Math.ceil(Math.random() * 9);
-                setRollVal(result);
-                setRolling(false);
-
-                const face = DICE_FACES[result];
-                if (face.type === 'IMMEDIATE') {
-                    executeEffect(result, []);
-                } else if (face.type === 'CHOICE') {
-                    setPhase('CHOICE');
-                } else {
-                    setPhase('TARGET');
-                }
-            };
-
-            const handleChoice = (choice) => {
-                setSubAction(choice);
-                setPhase('TARGET');
-            };
-
-            const handleTargetClick = (player) => {
-                if (phase !== 'TARGET' || !isMyTurn) return;
-                if (player.id === user.uid && !(rollVal === 6 && subAction === 'HEAL' && targets.length > 0)) {
-                    // Self targeting not allowed unless it's specific heal logic (but Face 6 heal says "qualcun altro OLTRE te")
-                    // Wait, Face 6 Heal says: Heal self 5 AND choose another to heal 5. So self is auto, target is other.
-                    return; 
+                // Effetto roll dei dadi
+                for (let i = 0; i < 6; i++) {
+                    setDiceValue(Math.floor(Math.random() * 6) + 1);
+                    await new Promise(r => setTimeout(r, 100));
                 }
 
-                if (targets.includes(player.id)) {
-                    setTargets(targets.filter(id => id !== player.id));
-                } else {
-                    let max = DICE_FACES[rollVal]?.maxTargets || 1;
-                    if (rollVal === 6) max = 1; // Both subactions require 1 target
-                    
-                    if (targets.length < max) {
-                        setTargets([...targets, player.id]);
-                    }
-                }
-            };
+                const roll = Math.floor(Math.random() * 6) + 1;
+                setDiceValue(roll);
+                await new Promise(r => setTimeout(r, 500));
 
-            const confirmTargets = () => {
-                executeEffect(rollVal, targets, subAction);
-            };
-
-            const executeEffect = async (roll, selectedTargetIds, choice = null) => {
                 let newPlayers = [...room.players];
-                const currentPlayerIndex = room.gameData.currentTurnIndex;
-                let me = newPlayers[currentPlayerIndex];
-                let logMsg = `${me.name} rolla ${roll}: ${DICE_FACES[roll].label}. `;
-                const currentRound = room.gameData.round || 1;
+                const me = newPlayers[room.gameData.currentTurnIndex];
+                let logMsg = "";
 
-                // Helper to damage
-                const dealDamage = (player, amount) => {
-                    if (player.invulnerable) return 0;
-                    const dmg = amount;
-                    player.hp -= dmg;
-                    return dmg;
-                };
-
-                // Helper to heal
-                const heal = (player, amount) => {
+                if (roll === 1) {
+                    me.hp = Math.max(0, me.hp - 10);
+                    logMsg = `💥 ${me.name} ha rollato 1 e ha subito 10 danni!`;
+                    playSynthSound('attack');
+                } else if (roll === 6) {
                     const max = room.config?.initialHp || 50;
-                    const oldHp = player.hp;
-                    player.hp = Math.min(max, player.hp + amount);
-                    return player.hp - oldHp;
-                };
-
-                if (roll === 1) { // Sacrificio
-                    me.hp -= 3;
-                    logMsg += `Perde 3 HP.`;
-                } else if (roll === 2) { // Colpo
-                    const target = newPlayers.find(p => p.id === selectedTargetIds[0]);
-                    if (target) {
-                        const dmg = dealDamage(target, 5);
-                        logMsg += dmg > 0 ? `Infligge 5 danni a ${target.name}.` : `${target.name} è INVULNERABILE!`;
-                    }
-                } else if (roll === 3) { // Multi
-                    const targetNames = [];
-                    selectedTargetIds.forEach(id => {
-                        const t = newPlayers.find(p => p.id === id);
-                        if (t) {
-                            dealDamage(t, 2);
-                            targetNames.push(t.name);
-                        }
-                    });
-                    logMsg += `Colpisce ${targetNames.join(', ')} per 2 danni.`;
-                } else if (roll === 4) { // Cura
-                    heal(me, 2);
-                    logMsg += `Recupera 2 HP.`;
-                } else if (roll === 5) { // Sniper
-                    const target = newPlayers.find(p => p.id === selectedTargetIds[0]);
-                    if (target) {
-                        const dmg = dealDamage(target, 8);
-                         logMsg += dmg > 0 ? `Cecchina ${target.name} per 8 danni!` : `${target.name} ha bloccato il colpo!`;
-                    }
-                } else if (roll === 6) { // Karma
-                    const target = newPlayers.find(p => p.id === selectedTargetIds[0]);
-                    if (choice === 'ATTACK') {
-                        if (target) {
-                            const dmg = dealDamage(target, 2);
-                            logMsg += `Sceglie violenza! 2 danni a ${target.name}.`;
-                        }
-                    } else {
-                        heal(me, 5);
-                        if (target) heal(target, 5);
-                        logMsg += `Sceglie pace! +5 HP a se stesso e a ${target ? target.name : 'nessuno'}.`;
-                    }
-                } else if (roll === 7) { // Esplosione
-                    const targetNames = [];
-                    selectedTargetIds.forEach(id => {
-                        const t = newPlayers.find(p => p.id === id);
-                        if (t) {
-                            dealDamage(t, 3);
-                            targetNames.push(t.name);
-                        }
-                    });
-                    logMsg += `Esplosione su ${targetNames.join(', ')} (3 danni).`;
-                } else if (roll === 8) { // Scudo
-                    me.invulnerable = true;
-                    logMsg += `È INVULNERABILE fino al prossimo turno!`;
-                } else if (roll === 9) { // Pugnale
-                     const target = newPlayers.find(p => p.id === selectedTargetIds[0]);
-                    if (target) {
-                        const dmg = dealDamage(target, 4);
-                        logMsg += dmg > 0 ? `Pugnala ${target.name} (4 danni).` : `${target.name} schiva!`;
-                    }
+                    me.hp = Math.min(max, me.hp + 5);
+                    logMsg = `💖 ${me.name} ha rollato 6 e ha recuperato 5 HP!`;
+                    playSynthSound('heal');
+                } else {
+                    logMsg = `🎲 ${me.name} ha rollato ${roll}. Tutto sicuro!`;
+                    playSynthSound('click');
                 }
 
-                // Check Eliminazioni e set Eliminazione Round
-                newPlayers.forEach(p => {
-                    if (p.hp <= 0 && p.status !== 'ELIMINATED') {
-                        p.hp = 0;
-                        p.status = 'ELIMINATED';
-                        p.eliminatedRound = currentRound; // Track round for leaderboard
-                        logMsg += ` ${p.name} MUORE!`;
-                    }
-                });
-
-                // Update Array (React State Immutability check)
-                newPlayers = newPlayers.map(p => {
-                   const updated = newPlayers.find(np => np.id === p.id);
-                   return updated || p;
-                });
+                if (me.hp <= 0) {
+                    me.hp = 0;
+                    me.status = 'ELIMINATED';
+                    me.eliminatedRound = room.gameData.round;
+                    logMsg += ` 💀 ${me.name} è stato eliminato!`;
+                }
 
                 const survivors = newPlayers.filter(p => p.status !== 'ELIMINATED');
                 let nextStatus = 'PLAYING';
                 let winnerId = null;
-                let nextIndex = currentPlayerIndex;
-                let nextRound = currentRound;
+                let nextIndex = room.gameData.currentTurnIndex;
+                let nextRound = room.gameData.round || 1;
 
                 if (survivors.length <= 1) {
                     nextStatus = 'GAME_OVER';
-                    winnerId = survivors[0]?.id;
-                    logMsg += ` ${survivors[0]?.name} VINCE!`;
+                    winnerId = survivors[0]?.id || null;
                 } else {
                     let loops = 0;
                     do {
                         nextIndex = (nextIndex + 1) % newPlayers.length;
-                        if(nextIndex === 0) nextRound++; // Increment round when looping back to player 0
+                        if (nextIndex === 0) nextRound++;
                         loops++;
                     } while (newPlayers[nextIndex].status === 'ELIMINATED' && loops < newPlayers.length * 2);
-
-                    // Clear invulnerability for the NEXT player (it's their turn now)
-                    if (newPlayers[nextIndex].invulnerable) {
-                        newPlayers[nextIndex].invulnerable = false;
-                        logMsg += ` (Scudo di ${newPlayers[nextIndex].name} scaduto)`;
-                    }
                 }
 
-                setPhase('ROLL');
-                setRollVal(null);
-                setTargets([]);
-                setSubAction(null);
+                setRolling(false);
 
                 await updateRoom({
                     players: newPlayers,
@@ -820,152 +533,942 @@
                         ...room.gameData,
                         currentTurnIndex: nextIndex,
                         round: nextRound,
-                        lastAction: logMsg,
-                        lastRoll: roll
+                        lastAction: logMsg
                     }
                 });
             };
 
-            // CPU Logic
             useEffect(() => {
-                if (currentPlayer.isCpu && isHost && room.status === 'PLAYING' && phase === 'ROLL') {
-                    const runCpuTurn = async () => {
-                         await new Promise(r => setTimeout(r, 1000));
-                         // CPU Roll
-                         const roll = Math.ceil(Math.random() * 9);
-                         const face = DICE_FACES[roll];
-                         
-                         let cpuTargets = [];
-                         let cpuChoice = null;
-
-                         const enemies = room.players.filter(p => p.id !== currentPlayer.id && p.status !== 'ELIMINATED');
-                         //const allies = enemies; // FFA
-
-                         if (face.type === 'TARGET' || roll === 6) {
-                             if (roll === 6) {
-                                 // Decide healing vs attack
-                                 cpuChoice = Math.random() > 0.5 ? 'ATTACK' : 'HEAL';
-                             }
-
-                             let count = face.maxTargets || 1;
-                             if (roll === 6) count = 1;
-
-                             // Simple random selection
-                             let potentialTargets = enemies;
-                             if (roll === 6 && cpuChoice === 'HEAL') {
-                                 // Heal another
-                                 potentialTargets = enemies; 
-                             }
-
-                             for (let i = 0; i < count; i++) {
-                                 if (potentialTargets.length > 0) {
-                                     const t = potentialTargets[Math.floor(Math.random() * potentialTargets.length)];
-                                     cpuTargets.push(t.id);
-                                     potentialTargets = potentialTargets.filter(pt => pt.id !== t.id);
-                                 }
-                             }
-                         }
-
-                         await executeEffect(roll, cpuTargets, cpuChoice);
-                    };
-                    runCpuTurn();
+                if (currentPlayer?.isCpu && isHost && room.status === 'PLAYING' && !rolling) {
+                    const timer = setTimeout(() => {
+                        handleRoll();
+                    }, 1500);
+                    return () => clearTimeout(timer);
                 }
-            }, [room.gameData.currentTurnIndex, room.status, phase]); // Removed 'phase' dependency to avoid loops? No, added phase check inside
+            }, [room.gameData.currentTurnIndex, room.status]);
 
             return (
-                <div className="flex flex-col items-center gap-6 w-full max-w-3xl">
-                    <div className="text-2xl font-bold text-center text-purple-400 flex items-center gap-2"><Dices /> Dadi Maledetti (9 Facce)</div>
+                <div className="flex flex-col items-center gap-6 w-full max-w-3xl text-center">
+                    <div className="text-2xl font-bold text-red-500 flex items-center gap-2 uppercase tracking-wider">
+                        <Skull /> L'Ultimo Sopravvissuto
+                    </div>
+                    <div className="glass-panel p-4 rounded text-center w-full min-h-[60px] flex flex-col items-center justify-center">
+                        <div className="text-lg">{room.gameData.lastAction || "Pronto a tirare i dadi della sorte?"}</div>
+                    </div>
 
-                    <div className="glass-panel p-6 rounded-2xl text-center w-full min-h-[100px] flex flex-col items-center justify-center">
-                        <div className="text-xl font-bold mb-2 text-purple-300">{room.gameData.lastAction || "Che il caos abbia inizio!"}</div>
-                        {room.gameData.lastRoll && (
-                            <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-lg border border-white/20">
-                                <span className="text-2xl font-bold">{room.gameData.lastRoll}</span>
-                                <span className="text-sm opacity-80">{DICE_FACES[room.gameData.lastRoll]?.label}</span>
+                    <div className="relative w-48 h-48 flex items-center justify-center">
+                        {isMyTurn && room.status === 'PLAYING' ? (
+                            <button 
+                                onClick={handleRoll}
+                                disabled={rolling}
+                                className={`w-36 h-36 rounded-2xl border-4 bg-gradient-to-br from-pink-600 to-purple-800 border-pink-500 text-white font-extrabold text-5xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${rolling ? 'dice-roll' : ''}`}
+                            >
+                                {diceValue || "🎲"}
+                            </button>
+                        ) : (
+                            <div className={`w-36 h-36 rounded-2xl border-4 border-gray-700 bg-gray-900 text-gray-500 font-extrabold text-5xl flex items-center justify-center ${rolling ? 'dice-roll' : ''}`}>
+                                {diceValue || "🎲"}
                             </div>
                         )}
                     </div>
 
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 w-full">
-                        {room.players.map((p, i) => {
-                             const isTargetSelected = targets.includes(p.id);
-                             const validTarget = phase === 'TARGET' && isMyTurn && p.id !== user.uid && p.status !== 'ELIMINATED';
-                             // Special case for Heal 6 self+other logic handled in click handler
-
-                             return (
-                                <div key={i} className={`relative ${isTargetSelected ? 'ring-4 ring-red-500 rounded-xl' : ''}`}>
-                                    <PlayerBadge 
-                                        player={p} 
-                                        isCurrentTurn={i === room.gameData.currentTurnIndex} 
-                                        isWinner={room.winnerId === p.id}
-                                        canBeTargeted={validTarget}
-                                        onClick={handleTargetClick}
-                                        maxHp={room.config?.initialHp || 50}
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {room.status === 'PLAYING' && (
-                        <div className="flex flex-col items-center mt-8 min-h-[150px] justify-end w-full">
-                             <div className="text-xl mb-4 text-purple-300">
-                                Turno di: <span className="font-bold">{currentPlayer.name}</span>
-                            </div>
-                            
-                            {isMyTurn && phase === 'ROLL' && (
-                                <button 
-                                    onClick={handleRoll} 
-                                    disabled={rolling}
-                                    className={`w-24 h-24 rounded-2xl flex items-center justify-center text-4xl font-bold transition-all shadow-lg border-4
-                                        ${rolling ? 'bg-gray-700 border-gray-500 cursor-not-allowed' : 'bg-purple-600 border-purple-400 hover:scale-110 hover:rotate-3'}
-                                    `}
-                                >
-                                    <span className={rolling ? "animate-spin" : ""}>🎲</span>
-                                </button>
-                            )}
-
-                            {isMyTurn && phase === 'CHOICE' && (
-                                <div className="flex gap-4 animate-bounce-in">
-                                    <button onClick={() => handleChoice('ATTACK')} className="bg-red-600 hover:bg-red-500 px-6 py-4 rounded-xl font-bold">
-                                        🗡️ ATTACCA (-2 HP)
-                                    </button>
-                                    <button onClick={() => handleChoice('HEAL')} className="bg-green-600 hover:bg-green-500 px-6 py-4 rounded-xl font-bold">
-                                        ❤️ CURA (+5 HP a te e altro)
-                                    </button>
-                                </div>
-                            )}
-
-                            {isMyTurn && phase === 'TARGET' && (
-                                <div className="flex flex-col items-center gap-3 animate-bounce-in">
-                                    <div className="text-lg font-bold text-yellow-400">
-                                        {rollVal === 6 ? (subAction === 'ATTACK' ? "Scegli chi colpire!" : "Scegli chi altro curare!") : `Seleziona Bersagli: ${targets.length}/${DICE_FACES[rollVal]?.maxTargets}`}
-                                    </div>
-                                    <div className="text-sm opacity-70 mb-2">{DICE_FACES[rollVal]?.desc}</div>
-                                    <button 
-                                        onClick={confirmTargets}
-                                        disabled={targets.length === 0} // Allow confirming even if less than max (e.g. if only 1 enemy left)
-                                        className={`px-8 py-3 rounded-xl font-bold text-lg ${targets.length > 0 ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 cursor-not-allowed'}`}
-                                    >
-                                        CONFERMA BERSAGLI
-                                    </button>
-                                </div>
-                            )}
-
-                            {!isMyTurn && <div className="text-gray-400 animate-pulse">Attendi...</div>}
-                        </div>
+                    {room.status === 'PLAYING' && !isMyTurn && currentPlayer && (
+                        <div className="text-yellow-400 animate-pulse">Turno di {currentPlayer.name}...</div>
                     )}
 
-                    {/* MOSTRA CLASSIFICA A FINE GIOCO */}
-                    {room.status === 'GAME_OVER' && (
-                        <>
-                            <Leaderboard />
-                            {room.hostId === user.uid && (
-                                <button onClick={() => updateRoom({ status: 'LOBBY', winnerId: null })} className="bg-green-600 hover:bg-green-500 px-6 py-2 rounded mt-6">
-                                    Torna alla Lobby
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 w-full mt-4">
+                        {room.players.map((p, i) => (
+                             <div key={i} className={`flex flex-col items-center p-2 rounded glass-panel transition-all ${i === room.gameData.currentTurnIndex ? 'border border-pink-500 bg-white/5 scale-105' : ''} ${p.status === 'ELIMINATED' ? 'opacity-30 grayscale' : ''}`}>
+                                <img src={p.img} className="w-10 h-10 rounded-full object-cover" onError={(e) => e.target.src='https://placehold.co/40'}/>
+                                <span className="text-xs font-bold truncate w-full mt-1 text-center">{p.name}</span>
+                                {p.status !== 'ELIMINATED' && (
+                                    <div className="w-full bg-gray-800 h-1.5 rounded mt-1 overflow-hidden">
+                                        <div className="bg-red-500 h-full" style={{ width: `${(p.hp / (room.config?.initialHp || 50)) * 100}%` }}></div>
+                                    </div>
+                                )}
+                                <span className="text-[10px] text-red-400 mt-1">{p.hp} HP</span>
+                             </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Componente di gioco per la modalità Dadi Maledetti
+        const CursedDiceGame = ({ room, user, updateRoom }) => {
+            const [rolling, setRolling] = useState(false);
+            const [diceValue, setDiceValue] = useState(null);
+            
+            const currentPlayer = room.players[room.gameData.currentTurnIndex];
+            const isMyTurn = currentPlayer?.id === user.uid;
+            const isHost = room.hostId === user.uid;
+
+            const curseEffects = [
+                { name: "Sacrificio (1)", desc: "Subisci 8 danni, infliggi 4 danni a tutti gli altri vivi!", color: "text-red-500" },
+                { name: "Scudo Cyber (2)", desc: "Ottieni invulnerabilità protettiva per questo round!", color: "text-blue-400" },
+                { name: "Cura (3)", desc: "Recupera 8 HP!", color: "text-green-400" },
+                { name: "Spina di Rete (4)", desc: "Subisci 3 danni diretti!", color: "text-yellow-500" },
+                { name: "Sifone di HP (5)", desc: "Ruba 5 HP a un avversario casuale!", color: "text-pink-400" },
+                { name: "Scramble (6)", desc: "Tutti scambiano HP casualmente!", color: "text-purple-400" }
+            ];
+
+            const handleRoll = async () => {
+                if (rolling) return;
+                setRolling(true);
+                playSynthSound('click');
+
+                for (let i = 0; i < 8; i++) {
+                    setDiceValue(Math.floor(Math.random() * 6) + 1);
+                    await new Promise(r => setTimeout(r, 80));
+                }
+
+                const roll = Math.floor(Math.random() * 6) + 1;
+                setDiceValue(roll);
+                await new Promise(r => setTimeout(r, 600));
+
+                let newPlayers = [...room.players];
+                const me = newPlayers[room.gameData.currentTurnIndex];
+                const maxHp = room.config?.initialHp || 50;
+                let logMsg = "";
+
+                if (roll === 1) { // Sacrificio
+                    me.hp = Math.max(0, me.hp - 8);
+                    newPlayers.forEach(p => {
+                        if (p.id !== me.id && p.status !== 'ELIMINATED') {
+                            p.hp = Math.max(0, p.hp - 4);
+                        }
+                    });
+                    logMsg = `☠️ ${me.name} si è sacrificato! Sente 8 danni e infligge 4 danni a tutti!`;
+                    playSynthSound('attack');
+                } else if (roll === 2) { // Scudo
+                    me.invulnerable = true;
+                    logMsg = `🛡️ ${me.name} ottiene lo Scudo Cyber! Sarà immune per un turno!`;
+                    playSynthSound('shield');
+                } else if (roll === 3) { // Cura
+                    me.hp = Math.min(maxHp, me.hp + 8);
+                    logMsg = `💚 ${me.name} si cura di 8 HP!`;
+                    playSynthSound('heal');
+                } else if (roll === 4) { // Spina
+                    me.hp = Math.max(0, me.hp - 3);
+                    logMsg = `⚡ ${me.name} calpesta una spina di rete subendo 3 danni!`;
+                    playSynthSound('sabotage');
+                } else if (roll === 5) { // Sifone
+                    const enemies = newPlayers.filter(p => p.id !== me.id && p.status !== 'ELIMINATED');
+                    if (enemies.length > 0) {
+                        const victim = enemies[Math.floor(Math.random() * enemies.length)];
+                        const victimObj = newPlayers.find(p => p.id === victim.id);
+                        victimObj.hp = Math.max(0, victimObj.hp - 5);
+                        me.hp = Math.min(maxHp, me.hp + 5);
+                        logMsg = `🩸 ${me.name} ruba 5 HP a ${victim.name}!`;
+                        playSynthSound('attack');
+                    } else {
+                        logMsg = `🎲 ${me.name} prova a rubare, ma non ci sono nemici vivi!`;
+                    }
+                } else if (roll === 6) { // Scramble
+                    const alive = newPlayers.filter(p => p.status !== 'ELIMINATED');
+                    if (alive.length > 1) {
+                        const hps = alive.map(p => p.hp);
+                        for (let i = hps.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [hps[i], hps[j]] = [hps[j], hps[i]];
+                        }
+                        alive.forEach((p, idx) => {
+                            p.hp = hps[idx];
+                        });
+                        logMsg = `🌀 CAOS! Tutti i valori HP dei superstiti sono stati scambiati!`;
+                        playSynthSound('sabotage');
+                    } else {
+                        logMsg = `🎲 Caos cosmico inefficace su un unico superstite!`;
+                    }
+                }
+
+                newPlayers.forEach(p => {
+                    if (p.hp <= 0 && p.status !== 'ELIMINATED') {
+                        p.hp = 0;
+                        p.status = 'ELIMINATED';
+                        p.eliminatedRound = room.gameData.round;
+                        logMsg += ` \n💀 ${p.name} è stato scollegato!`;
+                    }
+                });
+
+                const survivors = newPlayers.filter(p => p.status !== 'ELIMINATED');
+                let nextStatus = 'PLAYING';
+                let winnerId = null;
+                let nextIndex = room.gameData.currentTurnIndex;
+                let nextRound = room.gameData.round || 1;
+
+                if (survivors.length <= 1) {
+                    nextStatus = 'GAME_OVER';
+                    winnerId = survivors[0]?.id || null;
+                } else {
+                    let loops = 0;
+                    do {
+                        nextIndex = (nextIndex + 1) % newPlayers.length;
+                        if (newPlayers[nextIndex].invulnerable) {
+                            newPlayers[nextIndex].invulnerable = false;
+                        }
+                        if (nextIndex === 0) nextRound++;
+                        loops++;
+                    } while (newPlayers[nextIndex].status === 'ELIMINATED' && loops < newPlayers.length * 2);
+                }
+
+                setRolling(false);
+
+                await updateRoom({
+                    players: newPlayers,
+                    status: nextStatus,
+                    winnerId: winnerId,
+                    gameData: {
+                        ...room.gameData,
+                        currentTurnIndex: nextIndex,
+                        round: nextRound,
+                        lastAction: logMsg
+                    }
+                });
+            };
+
+            useEffect(() => {
+                if (currentPlayer?.isCpu && isHost && room.status === 'PLAYING' && !rolling) {
+                    const timer = setTimeout(() => {
+                        handleRoll();
+                    }, 1500);
+                    return () => clearTimeout(timer);
+                }
+            }, [room.gameData.currentTurnIndex, room.status]);
+
+            return (
+                <div className="flex flex-col items-center gap-6 w-full max-w-3xl text-center">
+                    <div className="text-2xl font-bold text-purple-500 flex items-center gap-2 uppercase tracking-wider">
+                        <Dices /> Dadi Maledetti
+                    </div>
+                    <div className="glass-panel p-4 rounded text-center w-full min-h-[60px] flex flex-col items-center justify-center">
+                        <div className="text-lg">{room.gameData.lastAction || "Il prossimo lancio potrebbe decidere il tuo destino."}</div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-8 justify-center my-4">
+                        <div className="relative w-36 h-36">
+                            {isMyTurn && room.status === 'PLAYING' ? (
+                                <button 
+                                    onClick={handleRoll}
+                                    disabled={rolling}
+                                    className={`w-32 h-32 rounded-3xl border-4 bg-gradient-to-br from-purple-600 to-indigo-900 border-purple-500 text-white font-extrabold text-5xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${rolling ? 'dice-roll' : ''}`}
+                                >
+                                    {diceValue || "🎲"}
+                                </button>
+                            ) : (
+                                <div className={`w-32 h-32 rounded-3xl border-4 border-gray-700 bg-gray-900 text-gray-500 font-extrabold text-5xl flex items-center justify-center ${rolling ? 'dice-roll' : ''}`}>
+                                    {diceValue || "🎲"}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="text-left bg-black/40 border border-white/10 p-4 rounded-xl text-xs max-w-xs space-y-1">
+                            <div className="font-bold text-purple-400 border-b border-white/10 pb-1 mb-1 uppercase text-[10px]">Leggenda della Maledizione</div>
+                            {curseEffects.map((eff, i) => (
+                                <div key={i} className="flex gap-2">
+                                    <span className={`${eff.color} font-bold w-20 shrink-0`}>{eff.name}:</span>
+                                    <span className="text-gray-300">{eff.desc}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {room.status === 'PLAYING' && !isMyTurn && currentPlayer && (
+                        <div className="text-yellow-400 animate-pulse">Turno di {currentPlayer.name}...</div>
+                    )}
+
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 w-full mt-4">
+                        {room.players.map((p, i) => (
+                             <div key={i} className={`flex flex-col items-center p-2 rounded glass-panel transition-all ${i === room.gameData.currentTurnIndex ? 'border border-purple-500 bg-white/5 scale-105' : ''} ${p.status === 'ELIMINATED' ? 'opacity-30 grayscale' : ''}`}>
+                                <img src={p.img} className="w-10 h-10 rounded-full object-cover" onError={(e) => e.target.src='https://placehold.co/40'}/>
+                                <span className="text-xs font-bold truncate w-full mt-1 text-center">{p.name}</span>
+                                {p.status !== 'ELIMINATED' && (
+                                    <div className="w-full bg-gray-800 h-1.5 rounded mt-1 overflow-hidden">
+                                        <div className="bg-red-500 h-full" style={{ width: `${(p.hp / (room.config?.initialHp || 50)) * 100}%` }}></div>
+                                    </div>
+                                )}
+                                <span className="text-[10px] text-purple-300 mt-1">{p.hp} HP {p.invulnerable ? "🛡️" : ""}</span>
+                             </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const CyberDeckGame = ({ room, user, updateRoom }) => {
+            const [selectedCardId, setSelectedCardId] = useState(null);
+            const [selectedTargetId, setSelectedTargetId] = useState(null);
+            const [localSubmitted, setLocalSubmitted] = useState(false);
+
+            const isHost = room.hostId === user.uid;
+            const alivePlayers = room.players.filter(p => p.status !== 'ELIMINATED');
+            const myPlayer = room.players.find(p => p.id === user.uid);
+            const isAlive = myPlayer && myPlayer.status !== 'ELIMINATED';
+
+            const secretActions = room.gameData.secretActions || {};
+            const revealIndex = room.gameData.revealIndex !== undefined ? room.gameData.revealIndex : -1;
+            const orderedActions = room.gameData.orderedActions || [];
+            
+            // Trova la carta selezionata localmente
+            const currentSelectedCard = CYBER_CARDS.find(c => c.id === selectedCardId);
+
+            // Audio trigger on dynamic updates
+            useEffect(() => {
+                if (revealIndex >= 0 && orderedActions[revealIndex]) {
+                    const act = orderedActions[revealIndex];
+                    const card = CYBER_CARDS.find(c => c.id === act.cardId);
+                    if (card) {
+                        if (["BUFF", "BUFF_SELECT"].includes(card.type)) playSynthSound('shield');
+                        else if (["HEAL"].includes(card.type)) playSynthSound('heal');
+                        else if (["SABOTAGE"].includes(card.type)) playSynthSound('sabotage');
+                        else playSynthSound('attack');
+                    }
+                }
+            }, [revealIndex]);
+
+            // CPU auto selection managed by host
+            useEffect(() => {
+                if (isHost && room.status === 'PLAYING' && revealIndex === -1) {
+                    const cpusToSubmit = room.players.filter(p => p.isCpu && p.status !== 'ELIMINATED' && !secretActions[p.id]);
+                    if (cpusToSubmit.length > 0) {
+                        const timeout = setTimeout(async () => {
+                            let updatedSecret = { ...secretActions };
+                            cpusToSubmit.forEach(cpu => {
+                                const cpuHand = cpu.hand || [];
+                                if (cpuHand.length > 0) {
+                                    const randomCardId = cpuHand[Math.floor(Math.random() * cpuHand.length)];
+                                    const card = CYBER_CARDS.find(c => c.id === randomCardId);
+                                    
+                                    // Scegli bersaglio tra altri giocatori vivi
+                                    const enemies = room.players.filter(p => p.id !== cpu.id && p.status !== 'ELIMINATED');
+                                    let targetId = "";
+                                    if (enemies.length > 0) {
+                                        targetId = enemies[Math.floor(Math.random() * enemies.length)].id;
+                                    }
+                                    updatedSecret[cpu.id] = { cardId: randomCardId, targetId: targetId };
+                                }
+                            });
+                            await updateRoom({ "gameData.secretActions": updatedSecret });
+                        }, 1200);
+                        return () => clearTimeout(timeout);
+                    }
+                }
+            }, [isHost, secretActions, revealIndex, room.status]);
+
+            // Reset local submission state when starting a new round
+            useEffect(() => {
+                if (revealIndex === -1 && !secretActions[user.uid]) {
+                    setLocalSubmitted(false);
+                    setSelectedCardId(null);
+                    setSelectedTargetId(null);
+                }
+            }, [revealIndex, secretActions]);
+
+            const handleCardClick = (card) => {
+                if (!isAlive || localSubmitted || revealIndex >= 0) return;
+                playSynthSound('click');
+                setSelectedCardId(card.id);
+                setSelectedTargetId(null);
+
+                // Se la mossa non necessita di bersaglio, possiamo impostarla a vuota
+                if (["BUFF", "HEAL", "RNG_ALL", "ATTACK_ALL"].includes(card.type)) {
+                    setSelectedTargetId("");
+                }
+            };
+
+            const handleTargetSelect = (targetPlayer) => {
+                if (!selectedCardId || localSubmitted || revealIndex >= 0) return;
+                playSynthSound('click');
+                setSelectedTargetId(targetPlayer.id);
+            };
+
+            const confirmAction = async () => {
+                if (!selectedCardId || selectedTargetId === null) return;
+                setLocalSubmitted(true);
+                
+                const updatedSecret = {
+                    ...secretActions,
+                    [user.uid]: { cardId: selectedCardId, targetId: selectedTargetId }
+                };
+
+                await updateRoom({ "gameData.secretActions": updatedSecret });
+            };
+
+            const resolveAllActionsAndStartReveal = async () => {
+                if (!isHost) return;
+
+                let simulatedPlayers = JSON.parse(JSON.stringify(room.players));
+                const currentRound = room.gameData.round || 1;
+                
+                // Mappa i pacchetti azione secretati
+                let rawActions = Object.keys(secretActions).map(playerId => {
+                    const p = simulatedPlayers.find(pl => pl.id === playerId);
+                    return {
+                        playerId,
+                        playerName: p ? p.name : "Giocatore",
+                        playerImg: p ? p.img : "",
+                        cardId: secretActions[playerId].cardId,
+                        targetId: secretActions[playerId].targetId
+                    };
+                });
+
+                // Ordine strategico di priorità (Scudi prima, poi cure, sabotaggi e per finire attacchi e RNG)
+                const getPriority = (cardId) => {
+                    const card = CYBER_CARDS.find(c => c.id === cardId);
+                    if (!card) return 4;
+                    if (["BUFF", "BUFF_SELECT"].includes(card.type)) return 1;
+                    if (["HEAL"].includes(card.type)) return 2;
+                    if (["SABOTAGE"].includes(card.type)) return 3;
+                    return 4; // Attacchi e Caos
+                };
+
+                rawActions.sort((a, b) => getPriority(a.cardId) - getPriority(b.cardId));
+
+                let actionTimeline = [];
+                let resolvedLogAccumulator = "";
+
+                // Esegui la simulazione per creare la timeline decisa dell'Host
+                rawActions.forEach((act) => {
+                    const attacker = simulatedPlayers.find(p => p.id === act.playerId);
+                    if (!attacker || attacker.status === 'ELIMINATED') return; // Giocatore morto prima della mossa
+
+                    const card = CYBER_CARDS.find(c => c.id === act.cardId);
+                    if (!card) return;
+
+                    let logMsg = `${attacker.name} lancia [${card.name}]`;
+                    let targetPlayer = simulatedPlayers.find(p => p.id === act.targetId);
+
+                    if (targetPlayer) {
+                        logMsg += ` su ${targetPlayer.name}. `;
+                    } else {
+                        logMsg += `. `;
+                    }
+
+                    // Controlla se l'attaccante soffre per Rete di Spine attiva
+                    if (attacker.spineRounds > 0) {
+                        attacker.hp = Math.max(0, attacker.hp - 2);
+                        attacker.spineRounds--;
+                        logMsg += `(Rete di Spine punisce ${attacker.name} con -2 HP! Rimangono ${attacker.spineRounds} round) `;
+                    }
+
+                    const dealDamage = (target, amount, incontestable = false) => {
+                        if (target.invulnerable && !incontestable) {
+                            logMsg += `[BLOCCATO!] Lo scudo di ${target.name} assorbe interamente il colpo! `;
+                            return 0;
+                        }
+                        if (target.reflected && !incontestable) {
+                            attacker.hp = Math.max(0, attacker.hp - amount);
+                            target.reflected = false;
+                            logMsg += `[RIFLESSO!] Lo Scudo a Specchio di ${target.name} devia il danno interamente su ${attacker.name}! `;
+                            return 0;
+                        }
+                        target.hp = Math.max(0, target.hp - amount);
+                        attacker.score = (attacker.score || 0) + amount;
+                        logMsg += `Infligge ${amount} danni a ${target.name}. `;
+                        return amount;
+                    };
+
+                    const heal = (target, amount) => {
+                        const max = room.config?.initialHp || 50;
+                        const oldHp = target.hp;
+                        target.hp = Math.min(max, target.hp + amount);
+                        logMsg += `Recupera +${target.hp - oldHp} HP. `;
+                    };
+
+                    // Implementazione degli effetti delle 24 carte elette
+                    switch (card.id) {
+                        case 1: // Plasma Laser
+                            if (targetPlayer) dealDamage(targetPlayer, 6);
+                            break;
+                        case 2: // Sanguisuga Digitale
+                            if (targetPlayer) {
+                                const actualDmg = dealDamage(targetPlayer, 4);
+                                if (actualDmg > 0) heal(attacker, 4);
+                            }
+                            break;
+                        case 3: // Colpo Critico 404
+                            if (targetPlayer) {
+                                if (Math.random() > 0.5) {
+                                    dealDamage(targetPlayer, 10);
+                                } else {
+                                    logMsg += "FALLITO! Il software crasha, nessun danno inflitto.";
+                                }
+                            }
+                            break;
+                        case 4: // Cannone a Risonanza
+                            if (targetPlayer) {
+                                dealDamage(targetPlayer, 5);
+                                const aliveIndices = simulatedPlayers.map((p, idx) => p.status !== 'ELIMINATED' ? idx : null).filter(idx => idx !== null);
+                                const currentTargetPos = simulatedPlayers.findIndex(p => p.id === targetPlayer.id);
+                                const alivePos = aliveIndices.indexOf(currentTargetPos);
+                                
+                                const prevIndex = aliveIndices[(alivePos - 1 + aliveIndices.length) % aliveIndices.length];
+                                const nextIndex = aliveIndices[(alivePos + 1) % aliveIndices.length];
+
+                                if (prevIndex !== undefined && simulatedPlayers[prevIndex].id !== attacker.id) {
+                                    dealDamage(simulatedPlayers[prevIndex], 2);
+                                }
+                                if (nextIndex !== undefined && simulatedPlayers[nextIndex].id !== attacker.id && nextIndex !== prevIndex) {
+                                    dealDamage(simulatedPlayers[nextIndex], 2);
+                                }
+                            }
+                            break;
+                        case 5: // Overclock Offensivo
+                            if (targetPlayer) {
+                                attacker.hp = Math.max(0, attacker.hp - 3);
+                                logMsg += `Sacrifica 3 HP. `;
+                                dealDamage(targetPlayer, 8);
+                            }
+                            break;
+                        case 6: // Algoritmo Mietitore
+                            if (targetPlayer) {
+                                const handSize = targetPlayer.hand ? targetPlayer.hand.length : 3;
+                                dealDamage(targetPlayer, handSize * 2);
+                            }
+                            break;
+                        case 7: // Sisma Elettronico
+                            simulatedPlayers.forEach(p => {
+                                if (p.status !== 'ELIMINATED') {
+                                    p.hp = Math.max(0, p.hp - 1);
+                                    if (p.hand && p.hand.length > 0) {
+                                        p.hand.splice(Math.floor(Math.random() * p.hand.length), 1);
+                                        p.hand.push(Math.ceil(Math.random() * 24));
+                                    }
+                                }
+                            });
+                            logMsg += "Terremoto elettrico totale! Tutti subiscono 1 danno e rimescolano 1 carta.";
+                            break;
+                        case 8: // Rete di Spine
+                            if (targetPlayer) {
+                                dealDamage(targetPlayer, 2);
+                                targetPlayer.spineRounds = (targetPlayer.spineRounds || 0) + 2;
+                                logMsg += `Applica Malus Spine per 2 turni. `;
+                            }
+                            break;
+                        case 9: // Pugno in Faccia
+                            if (targetPlayer) dealDamage(targetPlayer, 3, true); // Ignora scudi passivi e specchi!
+                            break;
+                        case 10: // Sciame di Vespe
+                            const targetsAlive = simulatedPlayers.filter(p => p.status !== 'ELIMINATED');
+                            const chosen = [];
+                            for (let i = 0; i < 3; i++) {
+                                if (targetsAlive.length > 0) {
+                                    const pickIdx = Math.floor(Math.random() * targetsAlive.length);
+                                    dealDamage(targetsAlive[pickIdx], 2);
+                                    chosen.push(targetsAlive[pickIdx].name);
+                                    targetsAlive.splice(pickIdx, 1);
+                                }
+                            }
+                            logMsg += `Sciame colpisce casualmente: ${chosen.join(', ')}.`;
+                            break;
+                        case 11: // Calcio
+                            if (targetPlayer) {
+                                targetPlayer.invulnerable = false;
+                                targetPlayer.reflected = false;
+                                logMsg += `Frantuma ogni barriera protettiva di ${targetPlayer.name}! `;
+                                dealDamage(targetPlayer, 3);
+                            }
+                            break;
+                        case 12: // Firewall Laser
+                            attacker.invulnerable = true;
+                            break;
+                        case 13: // Scudo a Specchio
+                            attacker.reflected = true;
+                            break;
+                        case 14: // Nano-Iniezione
+                            heal(attacker, 8);
+                            break;
+                        case 15: // Patch di Sicurezza
+                            heal(attacker, 5);
+                            attacker.spineRounds = 0;
+                            attacker.skipNextTurn = false;
+                            logMsg += "Rimuove ogni stato alterato negativo.";
+                            break;
+                        case 16: // Barriera Condivisa
+                            attacker.invulnerable = true;
+                            if (targetPlayer) targetPlayer.invulnerable = true;
+                            break;
+                        case 17: // Rigeneratore di Celle
+                            attacker.regenTurns = (attacker.regenTurns || 0) + 4;
+                            logMsg += `Avvia rigenerazione nanotecnologica. `;
+                            break;
+                        case 18: // DDoS Attack
+                            if (targetPlayer) {
+                                targetPlayer.skipNextTurn = true;
+                                logMsg += `Bloccherà il prossimo turno di ${targetPlayer.name}. `;
+                            }
+                            break;
+                        case 19: // Riavvio Forzato
+                            if (targetPlayer) {
+                                targetPlayer.hand = [Math.ceil(Math.random()*24), Math.ceil(Math.random()*24), Math.ceil(Math.random()*24)];
+                                logMsg += `Svuota e riavvia l'interfaccia di ${targetPlayer.name}. `;
+                            }
+                            break;
+                        case 20: // Keylogger
+                            if (targetPlayer) {
+                                targetPlayer.keyloggedBy = attacker.id;
+                                targetPlayer.keylogTimer = 2;
+                                logMsg += `Inietta spia digitale per 2 round. `;
+                            }
+                            break;
+                        case 21: // Roulette Russa
+                            if (targetPlayer) {
+                                if (Math.random() > 0.5) {
+                                    dealDamage(targetPlayer, 10);
+                                    logMsg += "Il colpo colpisce il bersaglio.";
+                                } else {
+                                    attacker.hp = Math.max(0, attacker.hp - 5);
+                                    logMsg += "Sfortuna! Il colpo esplode all'indietro (-5 HP).";
+                                }
+                            }
+                            break;
+                        case 22: // Tempesta EMP
+                            logMsg += "La tempesta disattiva le interfacce olografiche per il round corrente.";
+                            break;
+                        case 23: // Ira dei Pincher
+                            const aliveForPincher = simulatedPlayers.filter(p => p.status !== 'ELIMINATED');
+                            const effects = [
+                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; dealDamage(p, 5); logMsg += `[Artiglio] 5 danni a ${p.name}. `; },
+                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; if(p.hand) p.hand.splice(Math.floor(Math.random() * p.hand.length), 1); p.hand.push(Math.ceil(Math.random()*24)); logMsg += `[Morso] scarto di carta a ${p.name}. `; },
+                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; heal(p, 3); logMsg += `[Cura] +3 HP a ${p.name}. `; },
+                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; dealDamage(p, 3); logMsg += `[Ringhio] 3 danni a ${p.name}. `; }
+                            ];
+                            effects.forEach(f => f());
+                            break;
+                        case 24: // Specchio del Destino
+                            const sortedAlive = [...simulatedPlayers].filter(p => p.status !== 'ELIMINATED').sort((a,b) => b.hp - a.hp);
+                            if (sortedAlive.length >= 2) {
+                                const richest = simulatedPlayers.find(p => p.id === sortedAlive[0].id);
+                                const poorest = simulatedPlayers.find(p => p.id === sortedAlive[sortedAlive.length-1].id);
+                                const temp = richest.hp;
+                                richest.hp = poorest.hp;
+                                poorest.hp = temp;
+                                logMsg += `HP scambiati tra ${richest.name} e ${poorest.name}!`;
+                            }
+                            break;
+                    }
+
+                    // Gestione decesso
+                    simulatedPlayers.forEach(p => {
+                        if (p.hp <= 0 && p.status !== 'ELIMINATED') {
+                            p.hp = 0;
+                            p.status = 'ELIMINATED';
+                            p.eliminatedRound = currentRound;
+                            logMsg += `\n💀 ${p.name} è stato SCOLLEGATO!`;
+                        }
+                    });
+
+                    // Registra l'azione e la salute di tutti i giocatori in questo istante della timeline
+                    actionTimeline.push({
+                        playerId: act.playerId,
+                        playerName: act.playerName,
+                        playerImg: act.playerImg,
+                        cardId: act.cardId,
+                        targetId: act.targetId,
+                        resolvedText: logMsg,
+                        stateSnapshot: JSON.parse(JSON.stringify(simulatedPlayers))
+                    });
+
+                    resolvedLogAccumulator += logMsg + "\n";
+                });
+
+                // Rimuovi le carte usate dalle mani dei giocatori e pescane di nuove solo se esaurite del tutto
+                simulatedPlayers.forEach(p => {
+                    if (p.status !== 'ELIMINATED') {
+                        const originalPlayer = room.players.find(op => op.id === p.id);
+                        const usedCardId = secretActions[p.id]?.cardId;
+                        
+                        if (usedCardId && originalPlayer) {
+                            p.hand = (originalPlayer.hand || []).filter(id => id !== usedCardId);
+                            // Ricarica la mano a 3 carte solo ed esclusivamente se è vuota!
+                            if (p.hand.length === 0) {
+                                while (p.hand.length < 3) {
+                                    p.hand.push(Math.ceil(Math.random() * 24));
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Salva lo stato elaborato e avvia la proiezione sequenziale
+                await updateRoom({
+                    "gameData.orderedActions": actionTimeline,
+                    "gameData.revealIndex": 0,
+                    "gameData.simulatedPlayersState": simulatedPlayers
+                });
+            };
+
+            const nextReveal = async () => {
+                if (!isHost) return;
+                const nextIdx = revealIndex + 1;
+                
+                if (nextIdx < orderedActions.length) {
+                    await updateRoom({ "gameData.revealIndex": nextIdx });
+                } else {
+                    // Tutti i reveal sono terminati, concludiamo il turno
+                    let finalPlayers = [...room.gameData.simulatedPlayersState];
+                    let currentRound = room.gameData.round || 1;
+                    
+                    // Gestione scadenze scudi e rigenerazioni per il round successivo
+                    finalPlayers.forEach(p => {
+                        if (p.status !== 'ELIMINATED') {
+                            if (p.invulnerable) p.invulnerable = false;
+                            if (p.reflected) p.reflected = false;
+                            
+                            if (p.keylogTimer > 0) {
+                                p.keylogTimer--;
+                                if (p.keylogTimer === 0) p.keyloggedBy = null;
+                            }
+
+                            if (p.regenTurns > 0) {
+                                const max = room.config?.initialHp || 50;
+                                p.hp = Math.min(max, p.hp + 2);
+                                p.regenTurns--;
+                            }
+                        }
+                    });
+
+                    const survivors = finalPlayers.filter(p => p.status !== 'ELIMINATED');
+                    let nextStatus = 'PLAYING';
+                    let winnerId = null;
+                    let nextRound = currentRound + 1;
+
+                    if (survivors.length <= 1) {
+                        nextStatus = 'GAME_OVER';
+                        winnerId = survivors[0]?.id || null;
+                    }
+
+                    // Reset per il prossimo round
+                    await updateRoom({
+                        players: finalPlayers,
+                        status: nextStatus,
+                        winnerId: winnerId,
+                        "gameData.revealIndex": -1,
+                        "gameData.secretActions": {},
+                        "gameData.orderedActions": [],
+                        "gameData.round": nextRound,
+                        "gameData.lastAction": `Il Round ${currentRound} si è concluso con successo. Caricamento prossimo round olografico.`
+                    });
+                }
+            };
+
+            const currentRevealAction = orderedActions[revealIndex];
+            const allSubmitted = Object.keys(secretActions).length === alivePlayers.length;
+
+            return (
+                <div className="flex flex-col items-center gap-6 w-full max-w-4xl font-mono">
+                    {/* TITOLO PRINCIPALE */}
+                    <div className="text-2xl md:text-3xl font-bold text-center text-cyan-400 flex items-center gap-2 uppercase tracking-widest animate-pulse">
+                        <BookOpen size={32} /> Mazzo Cybernetico (Pianificazione Simultanea)
+                    </div>
+
+                    {/* SCHERMATA DI RIVELAZIONE SEQUENZIALE (MODO SUSPANCE ATTIVO) */}
+                    {revealIndex >= 0 ? (
+                        <div className="w-full bg-[#0a0a16] border-2 border-cyan-500 rounded-2xl p-6 shadow-[0_0_35px_rgba(6,182,212,0.4)] relative overflow-hidden scanlines flex flex-col items-center">
+                            <div className="absolute top-2 right-4 text-xs text-cyan-500 font-bold tracking-widest animate-pulse">
+                                RIVELAZIONE IN CORSO: {revealIndex + 1} / {orderedActions.length}
+                            </div>
+                            
+                            <h3 className="text-xl font-bold text-cyan-400 mb-6 uppercase tracking-wider">
+                                📡 Decrittografia Segnale Net_
+                            </h3>
+
+                            {/* Pannello d'azione olografico cinematografico */}
+                            {currentRevealAction && (
+                                <div className="flex flex-col items-center text-center w-full max-w-2xl bg-white/5 p-6 rounded-xl border border-cyan-500/30 animate-rise">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <img 
+                                            src={currentRevealAction.playerImg} 
+                                            className="w-16 h-16 rounded-full border-2 border-cyan-500 object-cover shadow-[0_0_15px_rgba(6,182,212,0.6)]" 
+                                            onError={(e) => e.target.src='https://placehold.co/64'}
+                                        />
+                                        <div className="text-left">
+                                            <div className="text-xs text-cyan-400 uppercase tracking-widest font-bold">Giocatore</div>
+                                            <div className="text-2xl font-black text-white">{currentRevealAction.playerName}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Dettagli della carta giocata */}
+                                    <div className="bg-cyan-950/40 p-4 rounded-xl border border-cyan-500/20 w-full mb-6 max-w-lg">
+                                        <div className="text-3xl mb-1">
+                                            {CYBER_CARDS.find(c => c.id === currentRevealAction.cardId)?.icon || "🃏"}
+                                        </div>
+                                        <div className="text-xl font-black text-cyan-300 uppercase">
+                                            {CYBER_CARDS.find(c => c.id === currentRevealAction.cardId)?.name || "Software"}
+                                        </div>
+                                        <div className="text-xs text-gray-400 mt-1 italic">
+                                            {CYBER_CARDS.find(c => c.id === currentRevealAction.cardId)?.desc || ""}
+                                        </div>
+                                    </div>
+
+                                    {/* Risoluzione testuale in tempo reale */}
+                                    <div className="text-lg text-white font-mono leading-relaxed bg-black/60 p-4 rounded border border-white/5 w-full text-left whitespace-pre-line min-h-[80px]">
+                                        {currentRevealAction.resolvedText}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Visualizzatore HP del snapshot corrente */}
+                            <div className="w-full mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                {currentRevealAction?.stateSnapshot?.map((p, idx) => (
+                                    <div key={idx} className={`p-2 rounded-lg glass-panel text-center transition-all ${p.status === 'ELIMINATED' ? 'opacity-30 grayscale' : ''}`}>
+                                        <div className="text-xs font-bold truncate">{p.name}</div>
+                                        <div className="w-full bg-gray-800 h-2.5 rounded-full overflow-hidden mt-1">
+                                            <div 
+                                                className="bg-red-500 h-full transition-all duration-500" 
+                                                style={{ width: `${Math.min(100, (p.hp / (room.config?.initialHp || 50)) * 100)}%` }}
+                                            />
+                                        </div>
+                                        <div className="text-[10px] text-gray-400 mt-1">HP: {p.hp}</div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* CONTROLLI DEL REVEAL (SOLO PER L'HOST) */}
+                            {isHost && (
+                                <button 
+                                    onClick={nextReveal}
+                                    className="mt-8 bg-green-600 hover:bg-green-500 text-white font-bold px-10 py-4 rounded-xl text-lg transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(34,197,94,0.4)] flex items-center gap-2"
+                                >
+                                    {revealIndex + 1 < orderedActions.length ? "ANALIZZA PROSSIMA AZIONE 📡" : "COMPLETA TURNO E APPLICA STATI ⚡"}
                                 </button>
                             )}
-                        </>
+                            {!isHost && (
+                                <div className="mt-8 text-cyan-400 text-sm animate-pulse uppercase tracking-widest font-bold">
+                                    Scansione del mainframe dell'Host in corso...
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        /* SCHERMATA DI PIANIFICAZIONE DELLE MOSSE */
+                        <div className="w-full flex flex-col items-center gap-6">
+                            {/* Pannello di stato delle prenotazioni degli altri giocatori */}
+                            <div className="w-full glass-panel p-4 rounded-xl border border-cyan-500/30">
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 text-center">
+                                    Stato Collegamenti Network
+                                </h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                                    {room.players.map((p, i) => {
+                                        const submitted = !!secretActions[p.id];
+                                        const isCurr = p.id === user.uid;
+                                        return (
+                                            <div 
+                                                key={i} 
+                                                onClick={() => !localSubmitted && selectedCardId && p.status !== 'ELIMINATED' && handleTargetSelect(p)}
+                                                className={`p-3 rounded-lg flex flex-col items-center border transition-all relative
+                                                    ${isCurr ? 'bg-cyan-500/10 border-cyan-500' : 'bg-black/30 border-white/5'}
+                                                    ${p.status === 'ELIMINATED' ? 'opacity-30 grayscale' : ''}
+                                                    ${selectedTargetId === p.id ? 'ring-2 ring-red-500 scale-105' : ''}
+                                                    ${!localSubmitted && selectedCardId && p.id !== user.uid && p.status !== 'ELIMINATED' ? 'cursor-pointer hover:border-red-500 hover:scale-105 animate-pulse' : ''}
+                                                `}
+                                            >
+                                                <img src={p.img} className="w-10 h-10 rounded-full mb-2 object-cover" onError={(e) => e.target.src='https://placehold.co/40'}/>
+                                                <span className="text-[10px] font-bold truncate w-full text-center">{p.name}</span>
+                                                
+                                                {/* Badge di stato caricamento software */}
+                                                {p.status !== 'ELIMINATED' && (
+                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded mt-1.5 uppercase font-bold tracking-wider ${submitted ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 animate-pulse'}`}>
+                                                        {submitted ? "Software Ready 🔒" : "Hacking..."}
+                                                    </span>
+                                                )}
+                                                {p.status === 'ELIMINATED' && (
+                                                    <span className="text-[9px] text-red-500 font-bold uppercase mt-1">Scollegato</span>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* MANO DEL GIOCATORE (SE ANCORA VIVO) */}
+                            {isAlive ? (
+                                <div className="w-full mt-4 flex flex-col items-center">
+                                    <h3 className="text-lg font-bold mb-3 text-cyan-400 uppercase tracking-widest text-center">
+                                        {localSubmitted ? "Software caricato con successo!" : "Seleziona un Programma Neon e un Bersaglio:"}
+                                    </h3>
+
+                                    {!localSubmitted ? (
+                                        <div className="w-full flex flex-col items-center gap-6">
+                                            {/* Griglia flessibile di carte in mano (centrate dinamicamente) */}
+                                            <div className="flex flex-wrap justify-center gap-4 max-w-2xl w-full">
+                                                {(myPlayer.hand || []).slice(0, 3).map((cardId, index) => {
+                                                    const card = CYBER_CARDS.find(c => c.id === cardId);
+                                                    if (!card) return null;
+                                                    const isSelected = selectedCardId === card.id;
+
+                                                    return (
+                                                        <div 
+                                                            key={index} 
+                                                            onClick={() => handleCardClick(card)}
+                                                            className={`cyber-card flex flex-col p-4 rounded-xl border-2 text-center select-none min-h-[160px] w-48 justify-between relative transition-all duration-300
+                                                                ${card.color}
+                                                                ${isSelected ? 'ring-4 ring-cyan-400 scale-105 shadow-[0_0_20px_rgba(6,182,212,0.6)]' : ''}
+                                                            `}
+                                                        >
+                                                            <div className="text-3xl">{card.icon}</div>
+                                                            <div className="font-bold text-sm tracking-wide mt-1 uppercase">
+                                                                {card.name}
+                                                            </div>
+                                                            <div className="text-[10px] opacity-80 mt-2 leading-tight">
+                                                                {card.desc}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* Bottone di conferma azione */}
+                                            {selectedCardId && (
+                                                <div className="flex flex-col items-center gap-2 animate-rise">
+                                                    <div className="text-sm text-yellow-400 font-bold uppercase">
+                                                        {selectedTargetId === "" ? "Pronto all'uso autonomo!" : selectedTargetId ? "Bersaglio agganciato!" : "Seleziona un bersaglio cliccando sulla sua scheda in alto!"}
+                                                    </div>
+                                                    <button 
+                                                        onClick={confirmAction}
+                                                        disabled={selectedTargetId === null}
+                                                        className={`px-8 py-3 rounded-xl font-bold text-lg uppercase transition-all transform hover:scale-105
+                                                            ${selectedTargetId !== null ? 'bg-cyan-500 hover:bg-cyan-400 text-black shadow-[0_0_20px_rgba(6,182,212,0.5)]' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}
+                                                        `}
+                                                    >
+                                                        Carica software nel server 📤
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 glass-panel border border-green-500/30 rounded-xl text-center flex flex-col items-center max-w-md">
+                                            <span className="text-4xl animate-bounce mb-2">💾</span>
+                                            <div className="text-green-400 font-bold uppercase tracking-widest text-lg">Programma in attesa di decrittografia</div>
+                                            <div className="text-xs text-gray-400 mt-2 font-serif">
+                                                Il tuo attacco [{CYBER_CARDS.find(c => c.id === selectedCardId)?.name}] è pronto. Attendi che tutti carichino le proprie mosse sul server centrale per dare il via alla proiezione olografica!
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="text-center py-6 text-red-500 animate-pulse uppercase tracking-widest font-bold">
+                                    💀 Sei stato disconnesso dal mainframe! Puoi solo assistere allo scontro.
+                                </div>
+                            )}
+
+                            {/* CONTROLLER ATTIVAZIONE REVEAL GENERALE (HOST ONLY) */}
+                            {isHost && (
+                                <div className="mt-8 border-t border-white/10 pt-6 w-full flex flex-col items-center">
+                                    {allSubmitted ? (
+                                        <button 
+                                            onClick={resolveAllActionsAndStartReveal}
+                                            className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-10 py-5 rounded-2xl text-xl transition-all transform hover:scale-110 shadow-[0_0_30px_rgba(147,51,234,0.6)] animate-bounce"
+                                        >
+                                            📡 AVVIA SCANSIONE OLOGRAFICA DEL ROUND! 📡
+                                        </button>
+                                    ) : (
+                                        <div className="text-gray-400 text-sm animate-pulse italic">
+                                            In attesa che tutti i nodi si colleghino per sbloccare la proiezione...
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             );
@@ -979,45 +1482,11 @@
             const isMyTurn = currentPlayer.id === user.uid;
             const isHost = room.hostId === user.uid;
 
-            // --- LEADERBOARD (Copia da altri giochi) ---
-            const Leaderboard = () => {
-                const sortedPlayers = [...room.players].sort((a, b) => {
-                    if (a.id === room.winnerId) return -1;
-                    if (b.id === room.winnerId) return 1;
-                    if (a.eliminatedRound !== b.eliminatedRound) {
-                        return (b.eliminatedRound || 0) - (a.eliminatedRound || 0);
-                    }
-                    return b.score - a.score;
-                });
-
-                return (
-                    <div className="w-full bg-black/40 p-4 rounded-xl mt-4">
-                        <h3 className="text-xl font-bold mb-2 text-yellow-400 text-center">Classifica Finale</h3>
-                        <div className="space-y-2">
-                            {sortedPlayers.map((p, i) => (
-                                <div key={i} className="flex items-center justify-between bg-white/5 p-2 rounded">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold w-6">{i + 1}°</span>
-                                        <img src={p.img} className="w-8 h-8 rounded-full border border-white/10"/>
-                                        <span>{p.name}</span>
-                                    </div>
-                                    <div className="text-sm text-gray-300">
-                                        {p.id === room.winnerId ? <span className="text-green-400 font-bold">VINCITORE</span> : `Eliminato Round ${p.eliminatedRound || '-'}`}
-                                        <span className="ml-3 text-blue-400">({p.score} PT)</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            };
-
             const handleTrigger = async () => {
                 if (pressing) return;
                 setPressing(true);
                 setExplosion(false);
 
-                // Suspense delay
                 await new Promise(r => setTimeout(r, 1200));
 
                 const currentRisk = room.gameData.risk || 10;
@@ -1027,21 +1496,16 @@
                 const me = newPlayers[room.gameData.currentTurnIndex];
                 let logMsg = "";
                 let nextRisk = currentRisk;
-                let survived = true;
 
                 if (roll < currentRisk) {
-                    // BOOM
                     setExplosion(true);
-                    survived = false;
                     me.status = 'ELIMINATED';
                     me.eliminatedRound = room.gameData.round;
                     logMsg = `BOOM! ${me.name} è saltato in aria! (Rischio era ${currentRisk}%)`;
-                    nextRisk = 10; // Reset risk
+                    nextRisk = 10;
                     
-                    // Delay for animation visibility
                     await new Promise(r => setTimeout(r, 1000));
                 } else {
-                    // Safe
                     me.score = (me.score || 0) + 50 + currentRisk;
                     logMsg = `CLICK! ${me.name} è salvo. (+${50+currentRisk} PT)`;
                     nextRisk = Math.min(95, currentRisk + 15);
@@ -1083,7 +1547,6 @@
                 });
             };
 
-            // CPU Logic
             useEffect(() => {
                 if (currentPlayer.isCpu && isHost && room.status === 'PLAYING') {
                     const timer = setTimeout(() => {
@@ -1105,7 +1568,6 @@
                     </div>
 
                     <div className="relative w-64 h-64 flex items-center justify-center">
-                        {/* Background Pulse based on risk */}
                         <div className={`absolute inset-0 rounded-full transition-all duration-1000 opacity-20 ${riskLevel > 50 ? 'bg-red-500 animate-ping' : 'bg-transparent'}`} style={{ animationDuration: `${Math.max(0.2, 1 - riskLevel/100)}s` }}></div>
 
                         {isMyTurn && room.status === 'PLAYING' ? (
@@ -1141,27 +1603,17 @@
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 w-full mt-4">
                         {room.players.map((p, i) => (
                              <div key={i} className={`flex flex-col items-center p-2 rounded glass-panel transition-all ${i === room.gameData.currentTurnIndex ? 'border border-yellow-500 bg-white/5' : ''} ${p.status === 'ELIMINATED' ? 'opacity-30 grayscale' : ''}`}>
-                                <img src={p.img} className="w-10 h-10 rounded-full border border-white/20"/>
+                                {}
+                                <img src={p.img} className="w-10 h-10 rounded-full border border-white/20" onError={(e) => e.target.src='https://placehold.co/40'}/>
                                 <span className="text-xs font-bold truncate w-full mt-1 text-center">{p.name}</span>
                                 {p.status !== 'ELIMINATED' && <span className="text-[10px] text-blue-400">{p.score} PT</span>}
                                 {p.status === 'ELIMINATED' && <Skull size={12} className="text-red-500 mt-1"/>}
-                            </div>
+                             </div>
                         ))}
                     </div>
                     
                     {room.status === 'PLAYING' && !isMyTurn && (
                          <div className="text-yellow-400 animate-pulse mt-4">Tocca a {currentPlayer.name}...</div>
-                    )}
-
-                    {room.status === 'GAME_OVER' && (
-                        <>
-                            <Leaderboard />
-                            {room.hostId === user.uid && (
-                                <button onClick={() => updateRoom({ status: 'LOBBY', winnerId: null })} className="bg-green-600 hover:bg-green-500 px-6 py-2 rounded mt-6">
-                                    Torna alla Lobby
-                                </button>
-                            )}
-                        </>
                     )}
                 </div>
             );
@@ -1243,42 +1695,14 @@
                 }
             }, [room.gameData.raceStatus]);
 
-            const RaceLeaderboard = () => {
-                const sortedPlayers = [...room.players].sort((a, b) => (b.score || 0) - (a.score || 0));
-
-                return (
-                    <div className="w-full bg-black/40 p-4 rounded-xl mt-4 max-h-[300px] overflow-y-auto">
-                        <h3 className="text-xl font-bold mb-2 text-pink-400 text-center">Risultati Finali</h3>
-                        <div className="space-y-2">
-                            {sortedPlayers.map((p, i) => (
-                                <div key={i} className="flex items-center justify-between bg-white/5 p-2 rounded">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`font-bold w-6 ${i===0 ? 'text-yellow-400 text-xl' : ''}`}>{i + 1}°</span>
-                                        <img src={p.img} className="w-8 h-8 rounded-full border border-white/20"/>
-                                        <span className={i===0 ? 'font-bold text-yellow-400' : ''}>{p.name}</span>
-                                        {p.isCpu && <span className="text-[9px] bg-purple-600 px-1 rounded text-white">CPU</span>}
-                                    </div>
-                                    <div className="text-xl font-bold text-white">
-                                        {p.score || 0}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            };
-
             return (
                 <div className="flex flex-col items-center gap-6 w-full max-w-2xl text-center">
                     <div className="text-2xl font-bold text-pink-400 flex items-center gap-2"><Zap /> Corsa dei Click</div>
                     
                     {room.status === 'GAME_OVER' ? (
-                        <>
-                            <div className="animate-bounce text-2xl font-bold text-yellow-400">
-                                VINCITORE: {room.players.find(p => p.id === room.winnerId)?.name}
-                            </div>
-                            <RaceLeaderboard />
-                        </>
+                        <div className="animate-bounce text-2xl font-bold text-yellow-400">
+                            VINCITORE: {room.players.find(p => p.id === room.winnerId)?.name}
+                        </div>
                     ) : (
                         <div className="text-6xl font-mono font-bold text-white mb-4">
                             {room.gameData.timeLeft}s
@@ -1307,12 +1731,6 @@
 
                     {room.gameData.raceStatus === 'CALCULATING' && (
                         <div className="text-xl animate-pulse">Calcolo risultati...</div>
-                    )}
-
-                    {room.status === 'GAME_OVER' && room.hostId === user.uid && (
-                        <button onClick={() => updateRoom({ status: 'LOBBY', winnerId: null })} className="bg-green-600 hover:bg-green-500 px-6 py-2 rounded mt-6">
-                            Torna alla Lobby
-                        </button>
                     )}
                 </div>
             );
@@ -1399,7 +1817,7 @@
             };
 
             return (
-                <div className="flex flex-col items-center gap-6 w-full max-w-2xl text-center relative">
+                <div className="flex flex-col items-center gap-6 w-full max-w-2xl text-center relative p-6">
                     <div className="absolute inset-0 pointer-events-none bg-red-500/10 pulse-red z-0 rounded-3xl"></div>
                     <div className="text-2xl font-bold text-red-500 flex items-center gap-2 z-10"><Bomb /> Bomba a Tempo</div>
                     
@@ -1415,7 +1833,8 @@
                              return (
                                 <div key={i} className={`relative flex flex-col items-center p-2 rounded glass-panel transition-all ${hasBomb ? 'scale-110 border-2 border-red-500 bg-red-900/40' : ''} ${p.status === 'ELIMINATED' ? 'opacity-30 grayscale' : ''}`}>
                                     {hasBomb && <div className="absolute -top-6 text-4xl bomb-shake">💣</div>}
-                                    <img src={p.img} className="w-12 h-12 rounded-full border border-white/20"/>
+                                    {}
+                                    <img src={p.img} className="w-12 h-12 rounded-full border border-white/20" onError={(e) => e.target.src='https://placehold.co/48'}/>
                                     <span className="text-xs font-bold truncate w-full mt-1">{p.name}</span>
                                     {p.status === 'ELIMINATED' && <span className="text-red-500 text-xs font-bold uppercase">Esploso</span>}
                                 </div>
@@ -1428,9 +1847,9 @@
                              <button 
                                 onClick={handlePass}
                                 className="bg-red-600 hover:bg-red-500 px-8 py-6 rounded-2xl text-2xl font-bold shadow-[0_0_30px_rgba(255,0,0,0.6)] animate-bounce"
-                            >
+                             >
                                 PASSA LA BOMBA! 💣
-                            </button>
+                             </button>
                         )}
                         {!isMyTurn && room.status === 'PLAYING' && (
                             <div className="text-xl font-mono text-red-300">
@@ -1438,18 +1857,6 @@
                             </div>
                         )}
                     </div>
-
-                    {room.status === 'GAME_OVER' && room.hostId === user.uid && (
-                        <button onClick={() => updateRoom({ status: 'LOBBY', winnerId: null })} className="bg-green-600 hover:bg-green-500 px-6 py-2 rounded mt-6 z-10">
-                            Lobby
-                        </button>
-                    )}
-                    
-                    {room.status === 'GAME_OVER' && (
-                         <div className="z-10 text-2xl font-bold text-green-400 mt-4">
-                            VINCITORE: {room.players.find(p => p.id === room.winnerId)?.name} 🏆
-                        </div>
-                    )}
                 </div>
             );
         };
@@ -1457,22 +1864,19 @@
         const ReactionGame = ({ room, user, updateRoom }) => {
             const [localFrozen, setLocalFrozen] = useState(false);
 
-            // Host logic to control lights
             useEffect(() => {
                 if (room.hostId === user.uid && room.gameData.status === 'WAITING') {
                     const timer = setTimeout(() => {
                         updateRoom({
                             gameData: { ...room.gameData, status: 'GO', startTime: Date.now() }
                         });
-                    }, 2000 + Math.random() * 4000); // 2-6s random
+                    }, 2000 + Math.random() * 4000);
                     return () => clearTimeout(timer);
                 }
             }, [room.gameData.status]);
 
-            // CPU Logic
             useEffect(() => {
                 if (room.hostId === user.uid && room.gameData.status === 'GO' && !room.gameData.roundWinner) {
-                    // Check if CPU wins
                     const cpuPlayers = room.players.filter(p => p.isCpu);
                     if (cpuPlayers.length > 0) {
                          const timer = setTimeout(() => {
@@ -1480,7 +1884,7 @@
                                  const winner = cpuPlayers[Math.floor(Math.random() * cpuPlayers.length)];
                                  handleWin(winner);
                              }
-                         }, 200 + Math.random() * 500); // 200-700ms reaction
+                         }, 200 + Math.random() * 500);
                          return () => clearTimeout(timer);
                     }
                 }
@@ -1490,7 +1894,7 @@
                 if (localFrozen || room.gameData.roundWinner) return;
 
                 if (room.gameData.status === 'WAITING') {
-                    setLocalFrozen(true); // False start penalty
+                    setLocalFrozen(true);
                     return;
                 }
 
@@ -1501,7 +1905,7 @@
             };
 
             const handleWin = async (winner) => {
-                if(room.gameData.roundWinner) return; // Already won
+                if(room.gameData.roundWinner) return;
 
                 let newPlayers = room.players.map(p => p.id === winner.id ? {...p, score: (p.score||0) + 1} : p);
                 
@@ -1549,7 +1953,8 @@
                     <div className="grid grid-cols-4 gap-2 w-full mt-4">
                         {room.players.map((p, i) => (
                             <div key={i} className="flex flex-col items-center glass-panel p-2 rounded">
-                                <img src={p.img} className="w-8 h-8 rounded-full"/>
+                                {}
+                                <img src={p.img} className="w-8 h-8 rounded-full" onError={(e) => e.target.src='https://placehold.co/32'}/>
                                 <span className="text-xs truncate w-full">{p.name}</span>
                                 <span className="font-bold text-yellow-400">{p.score} PT</span>
                             </div>
@@ -1560,9 +1965,6 @@
                         <div className="flex gap-4 mt-6">
                             <button onClick={startRound} className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-bold">
                                 {isResult ? "Prossimo Round" : "Inizia Round"}
-                            </button>
-                            <button onClick={() => updateRoom({ status: 'LOBBY', winnerId: null })} className="bg-gray-600 hover:bg-gray-500 px-6 py-3 rounded-xl font-bold">
-                                Lobby
                             </button>
                         </div>
                     )}
@@ -1578,15 +1980,14 @@
                 const op = ops[Math.floor(Math.random() * ops.length)];
                 let a, b;
 
-                // Logica Hard Mode
                 if (op === '+') {
-                    a = Math.floor(Math.random() * 90) + 10; // 10 a 99
+                    a = Math.floor(Math.random() * 90) + 10;
                     b = Math.floor(Math.random() * 90) + 10;
                 } else if (op === '-') {
                     a = Math.floor(Math.random() * 90) + 10;
                     b = Math.floor(Math.random() * 90) + 10;
-                } else { // '*'
-                    a = Math.floor(Math.random() * 13) + 3; // 3 a 15
+                } else {
+                    a = Math.floor(Math.random() * 13) + 3;
                     b = Math.floor(Math.random() * 13) + 3;
                 }
                 
@@ -1595,14 +1996,11 @@
                 if (op === '-') ans = a - b;
                 if (op === '*') ans = a * b;
 
-                // Generate wrong options close to the real answer to be tricky
                 let options = new Set([ans]);
                 while(options.size < 4) {
-                    // Deviazione piccola (-5 a +5) per confondere
                     let deviation = Math.floor(Math.random() * 11) - 5; 
                     if (deviation === 0) deviation = 1;
                     
-                    // Ogni tanto una deviazione più ampia (-20 a +20)
                     if (Math.random() > 0.7) deviation = Math.floor(Math.random() * 41) - 20;
 
                     let fake = ans + deviation;
@@ -1636,7 +2034,7 @@
                     handleWin(myPlayer);
                 } else {
                     setLocalFrozen(true);
-                    setTimeout(() => setLocalFrozen(false), 2000); // Freeze 2s
+                    setTimeout(() => setLocalFrozen(false), 2000);
                 }
             };
 
@@ -1651,14 +2049,12 @@
                 });
             };
 
-            // CPU Logic
             useEffect(() => {
                 if (room.hostId === user.uid && !room.gameData.roundWinner && room.gameData.question) {
                      const cpuPlayers = room.players.filter(p => p.isCpu);
                      if (cpuPlayers.length > 0) {
                          const timer = setTimeout(() => {
                              if(!room.gameData.roundWinner) {
-                                 // CPU has 30% chance to be wrong or slow, simplifying to just winning sometimes
                                  if (Math.random() > 0.3) {
                                      const winner = cpuPlayers[Math.floor(Math.random() * cpuPlayers.length)];
                                      handleWin(winner);
@@ -1669,7 +2065,6 @@
                      }
                 }
             }, [room.gameData.question, room.gameData.roundWinner]);
-
 
             return (
                 <div className="flex flex-col items-center gap-6 w-full max-w-2xl text-center">
@@ -1709,7 +2104,8 @@
                     <div className="grid grid-cols-4 gap-2 w-full mt-8">
                         {room.players.map((p, i) => (
                             <div key={i} className="flex flex-col items-center glass-panel p-2 rounded">
-                                <img src={p.img} className="w-8 h-8 rounded-full"/>
+                                {}
+                                <img src={p.img} className="w-8 h-8 rounded-full" onError={(e) => e.target.src='https://placehold.co/32'}/>
                                 <span className="text-xs truncate w-full">{p.name}</span>
                                 <span className="font-bold text-yellow-400">{p.score} PT</span>
                             </div>
@@ -1721,11 +2117,154 @@
                             <button onClick={startRound} className="bg-green-600 hover:bg-green-500 px-6 py-3 rounded-xl font-bold">
                                 Nuova Domanda
                             </button>
-                             <button onClick={() => updateRoom({ status: 'LOBBY', winnerId: null })} className="bg-gray-600 hover:bg-gray-500 px-6 py-3 rounded-xl font-bold">
-                                Lobby
-                            </button>
                         </div>
                     )}
+                </div>
+            );
+        };
+
+        const Podium = ({ room, user, updateRoom }) => {
+            const isHost = room.hostId === user.uid;
+
+            const getSortedPlayers = () => {
+                let players = [...room.players];
+                const isScoreBased = ['CLICK_RACE', 'DETONATOR', 'REACTION', 'MATH'].includes(room.selectedGame);
+                
+                return players.sort((a, b) => {
+                    if (a.id === room.winnerId) return -1;
+                    if (b.id === room.winnerId) return 1;
+                    
+                    const aElim = a.status === 'ELIMINATED';
+                    const bElim = b.status === 'ELIMINATED';
+                    if (aElim && !bElim) return 1;
+                    if (!aElim && bElim) return -1;
+                    
+                    if (isScoreBased) {
+                        return (b.score || 0) - (a.score || 0);
+                    } else {
+                        if (a.eliminatedRound !== b.eliminatedRound) {
+                            return (b.eliminatedRound || 0) - (a.eliminatedRound || 0);
+                        }
+                        if (a.hp !== b.hp) {
+                            return (b.hp || 0) - (a.hp || 0);
+                        }
+                        return (b.score || 0) - (a.score || 0);
+                    }
+                });
+            };
+
+            const sorted = getSortedPlayers();
+            const first = sorted[0];
+            const second = sorted[1];
+            const third = sorted[2];
+            const rest = sorted.slice(3);
+
+            return (
+                <div className="w-full max-w-3xl flex flex-col items-center gap-6 animate-rise">
+                    <div className="text-center">
+                        <div className="text-yellow-400 animate-pulse text-4xl md:text-5xl font-extrabold tracking-widest mb-2 flex items-center justify-center gap-3">
+                            <Trophy size={40} /> CLASSIFICA FINALE <Trophy size={40} />
+                        </div>
+                        <p className="text-gray-400 text-sm uppercase tracking-wider">La battaglia della modalità {room.selectedGame} è conclusa!</p>
+                    </div>
+
+                    <div className="flex items-end justify-center w-full max-w-xl h-80 px-4 mt-8 relative">
+                        {/* 2° Posto - ARGENTO */}
+                        {second && (
+                            <div className="flex flex-col items-center flex-1 z-10">
+                                <div className="relative group flex flex-col items-center">
+                                    {}
+                                    <img src={second.img} className="w-16 h-16 rounded-full border-2 border-slate-300 object-cover shadow-[0_0_15px_rgba(148,163,184,0.5)] mb-2" onError={(e) => e.target.src='https://placehold.co/64'} />
+                                    <div className="absolute -top-6 text-slate-300"><Star size={20} fill="currentColor" /></div>
+                                    <span className="text-xs font-bold text-slate-300 text-center truncate w-24 mb-1">{second.name}</span>
+                                    {second.status === 'ELIMINATED' && second.eliminatedRound && (
+                                        <span className="text-[10px] text-red-400 font-semibold mb-1">Eliminato Rd {second.eliminatedRound}</span>
+                                    )}
+                                </div>
+                                <div className="podium-silver w-full h-32 rounded-t-xl flex flex-col items-center justify-center">
+                                    <span className="text-4xl font-black text-slate-300 font-mono">2</span>
+                                    <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Argento</span>
+                                    {second.score !== undefined && <span className="text-xs text-blue-400 mt-1">{second.score} PT</span>}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 1° Posto - ORO */}
+                        {first && (
+                            <div className="flex flex-col items-center flex-1 z-20 -mx-2">
+                                <div className="relative flex flex-col items-center animate-bounce" style={{ animationDuration: '3s' }}>
+                                    {}
+                                    <img src={first.img} className="w-20 h-20 rounded-full border-4 border-yellow-400 object-cover shadow-[0_0_25px_rgba(234,179,8,0.7)] mb-2" onError={(e) => e.target.src='https://placehold.co/80'} />
+                                    <div className="absolute -top-7 text-yellow-400 animate-pulse"><Crown size={28} /></div>
+                                    <span className="text-sm font-black text-yellow-400 text-center truncate w-28 mb-1">{first.name}</span>
+                                </div>
+                                <div className="podium-gold w-full h-44 rounded-t-xl flex flex-col items-center justify-center relative">
+                                    <span className="text-5xl font-black text-yellow-400 font-mono">1</span>
+                                    <span className="text-[10px] text-yellow-500 uppercase tracking-widest font-bold">Campione</span>
+                                    {first.score !== undefined && <span className="text-xs text-yellow-300 mt-1 font-bold">{first.score} PT</span>}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 3° Posto - BRONZO */}
+                        {third ? (
+                            <div className="flex flex-col items-center flex-1 z-10">
+                                <div className="relative group flex flex-col items-center">
+                                    {}
+                                    <img src={third.img} className="w-14 h-14 rounded-full border-2 border-amber-600 object-cover shadow-[0_0_12px_rgba(180,83,9,0.5)] mb-2" onError={(e) => e.target.src='https://placehold.co/56'} />
+                                    <span className="text-xs font-bold text-amber-600 text-center truncate w-24 mb-1">{third.name}</span>
+                                    {third.status === 'ELIMINATED' && third.eliminatedRound && (
+                                        <span className="text-[10px] text-red-400 font-semibold mb-1">Eliminato Rd {third.eliminatedRound}</span>
+                                    )}
+                                </div>
+                                <div className="podium-bronze w-full h-24 rounded-t-xl flex flex-col items-center justify-center">
+                                    <span className="text-3xl font-black text-amber-600 font-mono">3</span>
+                                    <span className="text-[10px] text-amber-700 uppercase tracking-widest font-bold">Bronzo</span>
+                                    {third.score !== undefined && <span className="text-xs text-blue-400 mt-1">{third.score} PT</span>}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex-1"></div>
+                        )}
+                    </div>
+
+                    {/* Altri corridori dal 4° posto in giù */}
+                    {rest.length > 0 && (
+                        <div className="w-full max-w-xl bg-black/30 border border-white/5 p-4 rounded-xl mt-2 max-h-36 overflow-y-auto">
+                            <div className="text-xs text-gray-500 uppercase tracking-widest mb-2 font-bold">Altri Corridori</div>
+                            <div className="space-y-2">
+                                {rest.map((p, i) => (
+                                    <div key={i} className="flex items-center justify-between bg-white/5 p-2 rounded border border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs font-mono text-gray-400 font-bold">{i + 4}°</span>
+                                            {}
+                                            <img src={p.img} className="w-8 h-8 rounded-full border border-white/20" onError={(e) => e.target.src='https://placehold.co/32'}/>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-gray-300">{p.name}</span>
+                                                {p.status === 'ELIMINATED' && (
+                                                    <span className="text-[10px] text-red-400">Eliminato Round {p.eliminatedRound || '-'}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className="text-xs text-gray-400">{p.score !== undefined ? `${p.score} PT` : ''}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="mt-4">
+                        {isHost ? (
+                            <button 
+                                onClick={() => updateRoom({ status: 'LOBBY', winnerId: null })}
+                                className="bg-green-600 hover:bg-green-500 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-lg hover:shadow-green-500/30 transform hover:scale-105"
+                            >
+                                Torna alla Lobby
+                            </button>
+                        ) : (
+                            <div className="text-gray-400 text-sm animate-pulse italic">In attesa che l'Host torni alla lobby...</div>
+                        )}
+                    </div>
                 </div>
             );
         };
@@ -1735,54 +2274,89 @@
             const [roomId, setRoomId] = useState(null);
             const [inputRoomId, setInputRoomId] = useState("");
             const [selectedChar, setSelectedChar] = useState(null);
-            const [view, setView] = useState('HOME');
-            const [initialHp, setInitialHp] = useState(50); // Local state for Host slider
-            const [showCharSelector, setShowCharSelector] = useState(false); // Modal for lobby
+            const [initialHp, setInitialHp] = useState(50);
+            const [showCharSelector, setShowCharSelector] = useState(false);
+            const [errorMsg, setErrorMsg] = useState(null);
 
             const { data: room, loading } = useRoom(roomId, user);
 
             useEffect(() => {
                 const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await auth.signInWithCustomToken(__initial_auth_token);
-                    else await auth.signInAnonymously();
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await auth.signInWithCustomToken(__initial_auth_token);
+                        } else {
+                            await auth.signInAnonymously();
+                        }
+                    } catch (err) {
+                        console.error("Errore di autenticazione Firebase:", err);
+                        setErrorMsg("Impossibile connettersi al database PartyVerse. Riprova più tardi.");
+                    }
                 };
                 initAuth();
-                auth.onAuthStateChanged(u => { if(u) setUser(u); });
+                
+                const unsubscribe = auth.onAuthStateChanged(u => { 
+                    if(u) setUser(u); 
+                });
+                return () => unsubscribe();
             }, []);
 
             const createRoom = async () => {
-                if(!selectedChar) return alert("Seleziona un personaggio!");
+                if (!user) {
+                    setErrorMsg("Connessione a Firebase in corso... Attendi un secondo e riprova!");
+                    return;
+                }
+                if(!selectedChar) {
+                    setErrorMsg("Seleziona prima un personaggio dalla griglia!");
+                    return;
+                }
                 const newRoomId = Math.random().toString(36).substring(2, 8).toUpperCase();
                 const roomRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(newRoomId);
                 
-                await roomRef.set({
-                    hostId: user.uid,
-                    status: 'LOBBY',
-                    selectedGame: 'SURVIVAL',
-                    config: { initialHp: 50 },
-                    players: [{
-                        id: user.uid,
-                        name: selectedChar.name,
-                        img: selectedChar.img,
-                        isCpu: false,
-                        hp: 50,
-                        score: 0
-                    }],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                setRoomId(newRoomId);
+                try {
+                    await roomRef.set({
+                        hostId: user.uid,
+                        status: 'LOBBY',
+                        selectedGame: 'SURVIVAL',
+                        config: { initialHp: 50 },
+                        players: [{
+                            id: user.uid,
+                            name: selectedChar.name,
+                            img: selectedChar.img,
+                            isCpu: false,
+                            hp: 50,
+                            score: 0,
+                            hand: []
+                        }],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    setRoomId(newRoomId);
+                } catch (err) {
+                    console.error("Errore durante la creazione della stanza:", err);
+                    setErrorMsg("Errore di rete nell'avviare la stanza. Verifica i permessi o la connessione.");
+                }
             };
 
             const joinRoom = async () => {
-                if(!selectedChar) return alert("Seleziona un personaggio!");
-                if(!inputRoomId) return alert("Inserisci codice stanza");
+                if (!user) {
+                    setErrorMsg("Connessione a Firebase in corso... Attendi un secondo!");
+                    return;
+                }
+                if(!selectedChar) {
+                    setErrorMsg("Seleziona prima un personaggio per entrare!");
+                    return;
+                }
+                if(!inputRoomId) {
+                    setErrorMsg("Devi inserire il codice di una stanza!");
+                    return;
+                }
                 const roomRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(inputRoomId.toUpperCase());
                 try {
                     await db.runTransaction(async (t) => {
                         const doc = await t.get(roomRef);
-                        if (!doc.exists) throw "Stanza non trovata";
+                        if (!doc.exists) throw "Stanza non trovata. Controlla il codice inserito!";
                         const data = doc.data();
-                        if (data.status !== 'LOBBY') throw "Partita già iniziata";
+                        if (data.status !== 'LOBBY') throw "La partita in questa stanza è già in corso!";
                         
                         const newPlayers = [...data.players, {
                             id: user.uid,
@@ -1790,19 +2364,25 @@
                             img: selectedChar.img,
                             isCpu: false,
                             hp: 50,
-                            score: 0
+                            score: 0,
+                            hand: []
                         }];
                         t.update(roomRef, { players: newPlayers });
                     });
                     setRoomId(inputRoomId.toUpperCase());
-                } catch (e) { alert(e); }
+                } catch (e) { 
+                    setErrorMsg(e.toString()); 
+                }
             };
 
             const addCpu = async () => {
                 if (!room || room.hostId !== user.uid) return;
                 const usedNames = room.players.map(p => p.name);
                 const available = CHARACTERS.filter(c => !usedNames.includes(c.name));
-                if(available.length === 0) return alert("Finiti i personaggi!");
+                if(available.length === 0) {
+                    setErrorMsg("Hai già aggiunto tutti i personaggi disponibili nel roster!");
+                    return;
+                }
                 const randomChar = available[Math.floor(Math.random() * available.length)];
                 
                 const newPlayers = [...room.players, {
@@ -1811,7 +2391,8 @@
                     img: randomChar.img,
                     isCpu: true,
                     hp: 50,
-                    score: 0
+                    score: 0,
+                    hand: []
                 }];
                 await updateRoom({ players: newPlayers });
             };
@@ -1825,7 +2406,6 @@
             const changeCharacter = async (char) => {
                 setSelectedChar(char);
                 setShowCharSelector(false);
-                // If in lobby, update player data
                 if (room && roomId) {
                     const newPlayers = room.players.map(p => p.id === user.uid ? { ...p, name: char.name, img: char.img } : p);
                     await updateRoom({ players: newPlayers });
@@ -1834,28 +2414,41 @@
 
             const startGame = async () => {
                 if (!room || room.hostId !== user.uid) return;
-                const firstPlayerIndex = Math.floor(Math.random() * room.players.length);
+                
+                // Mescola l'ordine dei giocatori casualmente prima di iniziare
+                let shuffledPlayers = [...room.players].sort(() => Math.random() - 0.5);
+                const firstPlayerIndex = Math.floor(Math.random() * shuffledPlayers.length);
+                
                 let gameData = {
                     currentTurnIndex: firstPlayerIndex,
                     round: 1,
-                    lastAction: "Partita Iniziata!",
-                    roundSummary: null // Initialize as null to prevent undefined error
+                    lastAction: "La battaglia è cominciata!",
+                    roundSummary: null
                 };
 
-                let hpToSet = (room.selectedGame === 'SURVIVAL' || room.selectedGame === 'CURSED_DICE') ? initialHp : 50;
-                // Save config to firestore if it changed
-                if(room.selectedGame === 'SURVIVAL' || room.selectedGame === 'CURSED_DICE') {
+                let hpToSet = (room.selectedGame === 'SURVIVAL' || room.selectedGame === 'CURSED_DICE' || room.selectedGame === 'CYBER_DECK') ? initialHp : 50;
+                
+                if(room.selectedGame === 'SURVIVAL' || room.selectedGame === 'CURSED_DICE' || room.selectedGame === 'CYBER_DECK') {
                     await updateRoom({ config: { initialHp: hpToSet } });
                 }
 
-                let resetPlayers = room.players.map(p => ({
+                // Generazione mazzo per modalità a carte
+                const getRandomCardId = () => Math.ceil(Math.random() * 24);
+
+                let resetPlayers = shuffledPlayers.map(p => ({
                     ...p,
                     hp: hpToSet, 
                     score: 0,
-                    pos: {x:0, y:0},
                     status: 'ACTIVE',
                     eliminatedRound: null,
-                    damageTakenRound: 0 // Init
+                    damageTakenRound: 0,
+                    spineRounds: 0,
+                    regenTurns: 0,
+                    skipNextTurn: false,
+                    keyloggedBy: null,
+                    keylogTimer: 0,
+                    // Distribuisce 3 carte casuali a tutti all'inizio
+                    hand: [getRandomCardId(), getRandomCardId(), getRandomCardId()]
                 }));
 
                 if(room.selectedGame === 'CLICK_RACE') {
@@ -1877,14 +2470,6 @@
                     gameData.roundWinner = null;
                 }
 
-                if(room.selectedGame === 'CURSED_DICE') {
-                    gameData.lastRoll = null;
-                }
-                
-                if(room.selectedGame === 'DETONATOR') {
-                    gameData.risk = 10;
-                }
-
                 await updateRoom({
                     status: 'PLAYING',
                     players: resetPlayers,
@@ -1894,13 +2479,18 @@
 
             const updateRoom = async (data) => {
                 if(!roomId) return;
-                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomId).update(data);
+                try {
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('rooms').doc(roomId).update(data);
+                } catch (err) {
+                    console.error("Errore aggiornamento stanza:", err);
+                    setErrorMsg("Impossibile salvare i dati della partita. Controlla la rete.");
+                }
             };
 
-            // Character Selector Modal
+            // Selettore dei personaggi
             const CharacterSelector = () => (
                 <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#1a1a2e] p-6 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-white/20">
+                    <div className="bg-[#1a1a2e] p-6 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-white/20 animate-fade-in">
                         <h2 className="text-2xl font-bold mb-4">Scegli Personaggio</h2>
                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
                             {CHARACTERS.map((char, idx) => (
@@ -1909,7 +2499,8 @@
                                     onClick={() => changeCharacter(char)}
                                     className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all character-card relative aspect-square hover:border-pink-500`}
                                 >
-                                    <img src={char.img} alt={char.name} className="w-full h-full object-cover" loading="lazy" />
+                                    {}
+                                    <img src={char.img} alt={char.name} className="w-full h-full object-cover" loading="lazy" onError={(e) => e.target.src='https://placehold.co/64'} />
                                     <div className="absolute bottom-0 w-full bg-black/60 text-[9px] text-white text-center py-1 truncate px-1">{char.name}</div>
                                 </div>
                             ))}
@@ -1919,12 +2510,31 @@
                 </div>
             );
 
+            const ErrorModal = () => {
+                if (!errorMsg) return null;
+                return (
+                    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 animate-fade-in">
+                        <div className="bg-[#1a1a2e] border-2 border-red-500 shadow-2xl shadow-red-500/50 p-6 rounded-2xl w-full max-w-sm flex flex-col items-center text-center">
+                            <div className="text-red-500 mb-3"><AlertCircle size={48} /></div>
+                            <h3 className="text-xl font-bold text-white mb-2">ATTENZIONE</h3>
+                            <p className="text-gray-300 text-sm mb-6">{errorMsg}</p>
+                            <button 
+                                onClick={() => setErrorMsg(null)}
+                                className="bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-2 rounded-xl transition-all w-full"
+                            >
+                                OK, RICEVUTO
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
+
             if (!user) return <div className="h-screen flex items-center justify-center text-white">Caricamento PartyVerse...</div>;
 
-            // Initial Home Screen
             if (!roomId) {
                 return (
                     <div className="min-h-screen p-4 flex flex-col items-center">
+                        <ErrorModal />
                         <header className="mb-8 text-center">
                             <h1 className="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-2">PARTYVERSE</h1>
                             <p className="text-gray-400">Roster Royale Edition</p>
@@ -1939,7 +2549,8 @@
                                         onClick={() => setSelectedChar(char)}
                                         className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all character-card relative aspect-square ${selectedChar?.name === char.name ? 'border-pink-500 ring-2 ring-pink-500' : 'border-transparent opacity-70 hover:opacity-100'}`}
                                     >
-                                        <img src={char.img} alt={char.name} className="w-full h-full object-cover" loading="lazy" />
+                                        {}
+                                        <img src={char.img} alt={char.name} className="w-full h-full object-cover" loading="lazy" onError={(e) => e.target.src='https://placehold.co/64'} />
                                         <div className="absolute bottom-0 w-full bg-black/60 text-[9px] text-white text-center py-1 truncate px-1">
                                             {char.name}
                                         </div>
@@ -1981,12 +2592,21 @@
 
             if (loading || !room) return <div className="h-screen flex items-center justify-center">Sincronizzazione...</div>;
 
-            // --- LOBBY VIEW ---
+            if (room.status === 'GAME_OVER') {
+                return (
+                    <div className="min-h-screen p-4 flex flex-col items-center justify-center">
+                        <Podium room={room} user={user} updateRoom={updateRoom} />
+                    </div>
+                );
+            }
+
+            // --- VISTA LOBBY ---
             if (room.status === 'LOBBY') {
                 const isHost = room.hostId === user.uid;
                 return (
                     <div className="min-h-screen p-4 flex flex-col items-center">
-                         {showCharSelector && <CharacterSelector />}
+                        <ErrorModal />
+                        {showCharSelector && <CharacterSelector />}
                         
                         <div className="w-full max-w-4xl flex justify-between items-center mb-8 glass-panel p-4 rounded-xl">
                             <div>
@@ -1997,7 +2617,6 @@
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
-                            {/* Players List */}
                             <div className="glass-panel p-6 rounded-xl">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-xl font-bold">Giocatori ({room.players.length})</h3>
@@ -2011,7 +2630,8 @@
                                     {room.players.map((p, i) => (
                                         <div key={i} className="flex items-center gap-3 bg-white/5 p-2 rounded-lg relative group">
                                             <div className="w-10 h-10 rounded-full overflow-hidden border border-white/30 cursor-pointer" onClick={() => p.id === user.uid && setShowCharSelector(true)}>
-                                                <img src={p.img} className="w-full h-full object-cover"/>
+                                                {}
+                                                <img src={p.img} className="w-full h-full object-cover" onError={(e) => e.target.src='https://placehold.co/40'}/>
                                             </div>
                                             <div className="truncate flex-1">
                                                 <div className="font-bold text-sm truncate">{p.name}</div>
@@ -2033,17 +2653,27 @@
                                 </div>
                             </div>
 
-                            {/* Game Settings */}
                             <div className="glass-panel p-6 rounded-xl flex flex-col justify-between">
                                 <div>
                                     <h3 className="text-xl font-bold mb-4">Configurazione Gioco</h3>
                                     {isHost ? (
                                         <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-2">
                                             <button 
+                                                onClick={() => updateRoom({ selectedGame: 'CYBER_DECK' })}
+                                                className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${room.selectedGame === 'CYBER_DECK' ? 'bg-cyan-500/20 border-cyan-500' : 'border-white/10 hover:bg-white/5'}`}
+                                            >
+                                                <div className="bg-cyan-500 p-2 rounded-full text-white"><BookOpen size={20} /></div>
+                                                <div className="text-left flex-1">
+                                                    <div className="font-bold text-cyan-400">Mazzo Cybernetico (24 Carte)</div>
+                                                    <div className="text-xs opacity-70">Strategia • Carte Neon • Tattica</div>
+                                                </div>
+                                            </button>
+
+                                            <button 
                                                 onClick={() => updateRoom({ selectedGame: 'SURVIVAL' })}
                                                 className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${room.selectedGame === 'SURVIVAL' ? 'bg-red-500/20 border-red-500' : 'border-white/10 hover:bg-white/5'}`}
                                             >
-                                                <div className="bg-red-500 p-2 rounded-full"><Skull size={20} /></div>
+                                                <div className="bg-red-500 p-2 rounded-full text-white"><Skull size={20} /></div>
                                                 <div className="text-left flex-1">
                                                     <div className="font-bold">L'Ultimo Sopravvissuto</div>
                                                     <div className="text-xs opacity-70">Eliminazione • Dadi • Fortuna</div>
@@ -2054,14 +2684,14 @@
                                                 onClick={() => updateRoom({ selectedGame: 'CURSED_DICE' })}
                                                 className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${room.selectedGame === 'CURSED_DICE' ? 'bg-purple-500/20 border-purple-500' : 'border-white/10 hover:bg-white/5'}`}
                                             >
-                                                <div className="bg-purple-500 p-2 rounded-full"><Dices size={20} /></div>
-                                                <div className="text-left">
+                                                <div className="bg-purple-500 p-2 rounded-full text-white"><Dices size={20} /></div>
+                                                <div className="text-left flex-1">
                                                     <div className="font-bold">Dadi Maledetti</div>
                                                     <div className="text-xs opacity-70">Caos • Imprevedibile • RNG</div>
                                                 </div>
                                             </button>
                                             
-                                            {(room.selectedGame === 'SURVIVAL' || room.selectedGame === 'CURSED_DICE') && (
+                                            {(room.selectedGame === 'SURVIVAL' || room.selectedGame === 'CURSED_DICE' || room.selectedGame === 'CYBER_DECK') && (
                                                 <div className="bg-white/5 p-3 rounded-lg border border-white/10">
                                                     <label className="text-sm text-gray-300 block mb-2">HP Iniziali: <span className="font-bold text-white">{initialHp}</span></label>
                                                     <input 
@@ -2079,8 +2709,8 @@
                                                 onClick={() => updateRoom({ selectedGame: 'DETONATOR' })}
                                                 className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${room.selectedGame === 'DETONATOR' ? 'bg-red-700/20 border-red-700' : 'border-white/10 hover:bg-white/5'}`}
                                             >
-                                                <div className="bg-red-700 p-2 rounded-full"><Power size={20} /></div>
-                                                <div className="text-left">
+                                                <div className="bg-red-700 p-2 rounded-full text-white"><Power size={20} /></div>
+                                                <div className="text-left flex-1">
                                                     <div className="font-bold">Il Detonatore</div>
                                                     <div className="text-xs opacity-70">Rischio • Eliminazione • Fortuna</div>
                                                 </div>
@@ -2090,8 +2720,8 @@
                                                 onClick={() => updateRoom({ selectedGame: 'CLICK_RACE' })}
                                                 className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${room.selectedGame === 'CLICK_RACE' ? 'bg-pink-500/20 border-pink-500' : 'border-white/10 hover:bg-white/5'}`}
                                             >
-                                                <div className="bg-pink-500 p-2 rounded-full"><Zap size={20} /></div>
-                                                <div className="text-left">
+                                                <div className="bg-pink-500 p-2 rounded-full text-white"><Zap size={20} /></div>
+                                                <div className="text-left flex-1">
                                                     <div className="font-bold">Corsa dei Click</div>
                                                     <div className="text-xs opacity-70">Riflessi • Click • Caos</div>
                                                 </div>
@@ -2101,8 +2731,8 @@
                                                 onClick={() => updateRoom({ selectedGame: 'HOT_POTATO' })}
                                                 className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${room.selectedGame === 'HOT_POTATO' ? 'bg-orange-500/20 border-orange-500' : 'border-white/10 hover:bg-white/5'}`}
                                             >
-                                                <div className="bg-orange-500 p-2 rounded-full"><Bomb size={20} /></div>
-                                                <div className="text-left">
+                                                <div className="bg-orange-500 p-2 rounded-full text-white"><Bomb size={20} /></div>
+                                                <div className="text-left flex-1">
                                                     <div className="font-bold">Bomba a Tempo</div>
                                                     <div className="text-xs opacity-70">Eliminazione • Panico</div>
                                                 </div>
@@ -2112,8 +2742,8 @@
                                                 onClick={() => updateRoom({ selectedGame: 'REACTION' })}
                                                 className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${room.selectedGame === 'REACTION' ? 'bg-green-500/20 border-green-500' : 'border-white/10 hover:bg-white/5'}`}
                                             >
-                                                <div className="bg-green-500 p-2 rounded-full"><Eye size={20} /></div>
-                                                <div className="text-left">
+                                                <div className="bg-green-500 p-2 rounded-full text-white"><Eye size={20} /></div>
+                                                <div className="text-left flex-1">
                                                     <div className="font-bold">Riflessi Lampo</div>
                                                     <div className="text-xs opacity-70">Reazione • Attenzione</div>
                                                 </div>
@@ -2123,8 +2753,8 @@
                                                 onClick={() => updateRoom({ selectedGame: 'MATH' })}
                                                 className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${room.selectedGame === 'MATH' ? 'bg-indigo-500/20 border-indigo-500' : 'border-white/10 hover:bg-white/5'}`}
                                             >
-                                                <div className="bg-indigo-500 p-2 rounded-full"><Brain size={20} /></div>
-                                                <div className="text-left">
+                                                <div className="bg-indigo-500 p-2 rounded-full text-white"><Brain size={20} /></div>
+                                                <div className="text-left flex-1">
                                                     <div className="font-bold">Matematica Folle</div>
                                                     <div className="text-xs opacity-70">Logica • Velocità</div>
                                                 </div>
@@ -2153,11 +2783,13 @@
                 );
             }
 
-            // --- GAME VIEW ---
+            // --- INSTRADAMENTO MODALITÀ ATTIVA ---
             if (room.selectedGame === 'SURVIVAL') {
                 return <div className="min-h-screen p-4 flex flex-col items-center justify-center"><SurvivalGame room={room} user={user} updateRoom={updateRoom} /></div>;
             } else if (room.selectedGame === 'CURSED_DICE') {
                 return <div className="min-h-screen p-4 flex flex-col items-center justify-center"><CursedDiceGame room={room} user={user} updateRoom={updateRoom} /></div>;
+            } else if (room.selectedGame === 'CYBER_DECK') {
+                return <div className="min-h-screen p-4 flex flex-col items-center justify-center"><CyberDeckGame room={room} user={user} updateRoom={updateRoom} /></div>;
             } else if (room.selectedGame === 'DETONATOR') {
                 return <div className="min-h-screen p-4 flex flex-col items-center justify-center"><DetonatorGame room={room} user={user} updateRoom={updateRoom} /></div>;
             } else if (room.selectedGame === 'CLICK_RACE') {
