@@ -439,14 +439,14 @@
           { id: 7, name: "Sisma Elettronico", type: "ATTACK_ALL", icon: "🔴", desc: "Infligge 1 danno a tutti e costringe ognuno a scartare una carta casuale.", color: "border-red-500 bg-red-950/40 text-red-200" },
           { id: 8, name: "Rete di Spine", type: "ATTACK", icon: "🔴", desc: "Infligge 2 danni immediati. Per 2 round, quando gioca subisce altri 2 danni.", color: "border-red-500 bg-red-950/40 text-red-200" },
           { id: 9, name: "Pugno in Faccia", type: "ATTACK", icon: "🔴", desc: "Infligge 3 danni diretti e incontestabili (ignora scudi).", color: "border-red-500 bg-red-950/40 text-red-200" },
-          { id: 10, name: "Sciame di Vespe", type: "ATTACK_ALL", icon: "🔴", desc: "Infligge 2 danni a 3 giocatori a tua scelta (scelti casualmente).", color: "border-red-500 bg-red-950/40 text-red-200" },
+          { id: 10, name: "Sciame di Vespe", type: "ATTACK_MULTI", icon: "🐝", desc: "Scegli fino a 2 bersagli diversi a tua scelta e infliggi 4 danni a ciascuno.", color: "border-red-500 bg-red-950/40 text-red-200" },
           { id: 11, name: "Calcio", type: "ATTACK", icon: "🔴", desc: "Infligge 3 danni e manda in frantumi lo scudo/invulnerabilità avversaria!", color: "border-red-500 bg-red-950/40 text-red-200" },
           { id: 12, name: "Firewall Laser", type: "BUFF", icon: "🔵", desc: "Ti rende completamente invulnerabile per l'intero round.", color: "border-blue-500 bg-blue-950/40 text-blue-200" },
           { id: 13, name: "Scudo a Specchio", type: "BUFF", icon: "🔵", desc: "Se vieni attaccato in questo round, rifletti interamente i danni al mittente.", color: "border-blue-500 bg-blue-950/40 text-blue-200" },
-          { id: 14, name: "Nano-Iniezione", type: "HEAL", icon: "🟢", desc: "Recuperi immediatamente 8 HP.", color: "border-green-500 bg-green-950/40 text-green-200" },
-          { id: 15, name: "Patch di Sicurezza", type: "HEAL", icon: "🟢", desc: "Cura 5 HP e rimuove qualsiasi effetto negativo (Spine o Malus).", color: "border-green-500 bg-green-950/40 text-green-200" },
+          { id: 14, name: "Nano-Iniezione", type: "HEAL", icon: "🟢", desc: "Cura immediatamente 8 HP. Puoi usarla su te stesso o su un alleato.", color: "border-green-500 bg-green-950/40 text-green-200" },
+          { id: 15, name: "Patch di Sicurezza", type: "HEAL", icon: "🟢", desc: "Cura 5 HP e rimuove qualsiasi effetto negativo (Spine o Malus) da te o da un alleato.", color: "border-green-500 bg-green-950/40 text-green-200" },
           { id: 16, name: "Barriera Condivisa", type: "BUFF_SELECT", icon: "🔵", desc: "Protegge te e un altro giocatore a scelta per 1 round.", color: "border-blue-500 bg-blue-950/40 text-blue-200" },
-          { id: 17, name: "Rigeneratore di Celle", type: "BUFF", icon: "🟢", desc: "Cura +2 HP all'inizio di ogni tuo turno per i prossimi 4 turni.", color: "border-green-500 bg-green-950/40 text-green-200" },
+          { id: 17, name: "Rigeneratore di Celle", type: "BUFF", icon: "🟢", desc: "Cura +2 HP all'inizio di ogni tuo turno per i primi 4 turni.", color: "border-green-500 bg-green-950/40 text-green-200" },
           { id: 18, name: "DDoS Attack", type: "SABOTAGE", icon: "🟡", desc: "Impedisce a un giocatore a scelta di giocare carte nel suo prossimo turno.", color: "border-yellow-500 bg-yellow-950/40 text-yellow-200" },
           { id: 19, name: "Riavvio Forzato", type: "SABOTAGE", icon: "🟣", desc: "Costringe un avversario a scartare la mano e pescare 3 nuove carte.", color: "border-purple-500 bg-purple-950/40 text-purple-200" },
           { id: 20, name: "Keylogger", type: "SABOTAGE", icon: "🟣", desc: "Spia la mano dell'avversario a scelta per i prossimi 2 round.", color: "border-purple-500 bg-purple-950/40 text-purple-200" },
@@ -797,7 +797,7 @@
 
         const CyberDeckGame = ({ room, user, updateRoom }) => {
             const [selectedCardId, setSelectedCardId] = useState(null);
-            const [selectedTargetId, setSelectedTargetId] = useState(null);
+            const [selectedTargetIds, setSelectedTargetIds] = useState([]);
             const [localSubmitted, setLocalSubmitted] = useState(false);
 
             const isHost = room.hostId === user.uid;
@@ -809,10 +809,72 @@
             const revealIndex = room.gameData.revealIndex !== undefined ? room.gameData.revealIndex : -1;
             const orderedActions = room.gameData.orderedActions || [];
             
-            // Trova la carta selezionata localmente
             const currentSelectedCard = CYBER_CARDS.find(c => c.id === selectedCardId);
 
-            // Audio trigger on dynamic updates
+            const currentRound = room.gameData.round || 1;
+            const roundsSinceLastRotation = (currentRound - 1) % 3;
+            const roundsUntilNextRotation = 3 - roundsSinceLastRotation;
+
+            // Determina la configurazione di targeting di una specifica carta
+            const getCardTargetConfig = (card) => {
+                if (!card) return { max: 0, allowSelf: false, allowOthers: false };
+                
+                // Caso Speciale: Sciame di Vespe (id: 10) permette di colpire fino a 2 bersagli diversi (altri giocatori)
+                if (card.id === 10) {
+                    return { max: 2, allowSelf: false, allowOthers: true };
+                }
+                
+                // Carte offensive o sabotaggi a bersaglio singolo (non su se stessi)
+                if ([1, 2, 3, 4, 5, 6, 8, 9, 11, 18, 19, 20, 21].includes(card.id)) {
+                    return { max: 1, allowSelf: false, allowOthers: true };
+                }
+                
+                // Carte curative e difensive selezionabili su di sé O su altri (Nano-Iniezione, Patch, Barriera Condivisa)
+                if ([14, 15, 16].includes(card.id)) {
+                    return { max: 1, allowSelf: true, allowOthers: true };
+                }
+                
+                // Carte ad attivazione automatica senza selezione mirata (Sisma, Firewall, Scudo Specchio, Rigeneratore, etc.)
+                return { max: 0, allowSelf: false, allowOthers: false };
+            };
+
+            const renderTextWithAvatars = (text) => {
+                if (!text) return "";
+                let elements = [text];
+                room.players.forEach(p => {
+                    const nameStr = p.name;
+                    const newElements = [];
+                    let keyCounter = 0; 
+                    elements.forEach(el => {
+                        if (el && typeof el === 'string') {
+                            const parts = el.split(nameStr);
+                            for (let i = 0; i < parts.length; i++) {
+                                if (parts[i] !== "") {
+                                    newElements.push(parts[i]);
+                                }
+                                if (i < parts.length - 1) {
+                                    newElements.push(
+                                        <span key={`${p.id}-${keyCounter++}`} className="inline-flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded-md border border-white/20 text-cyan-300 mx-1 font-bold text-sm align-middle">
+                                            <img 
+                                                src={p.img} 
+                                                className="w-5 h-5 rounded-full object-cover inline-block border border-cyan-500/30" 
+                                                onError={(e) => e.target.src='https://placehold.co/20'} 
+                                            />
+                                            {p.name}
+                                        </span>
+                                    );
+                                }
+                            }
+                        } else {
+                            newElements.push(el);
+                        }
+                    });
+                    elements = newElements;
+                });
+                return elements;
+            };
+
+            // Triggers audio su eventi di reveal
             useEffect(() => {
                 if (revealIndex >= 0 && orderedActions[revealIndex]) {
                     const act = orderedActions[revealIndex];
@@ -826,7 +888,6 @@
                 }
             }, [revealIndex]);
 
-            // CPU auto selection managed by host
             useEffect(() => {
                 if (isHost && room.status === 'PLAYING' && revealIndex === -1) {
                     const cpusToSubmit = room.players.filter(p => p.isCpu && p.status !== 'ELIMINATED' && !secretActions[p.id]);
@@ -836,16 +897,45 @@
                             cpusToSubmit.forEach(cpu => {
                                 const cpuHand = cpu.hand || [];
                                 if (cpuHand.length > 0) {
-                                    const randomCardId = cpuHand[Math.floor(Math.random() * cpuHand.length)];
-                                    const card = CYBER_CARDS.find(c => c.id === randomCardId);
-                                    
-                                    // Scegli bersaglio tra altri giocatori vivi
-                                    const enemies = room.players.filter(p => p.id !== cpu.id && p.status !== 'ELIMINATED');
-                                    let targetId = "";
-                                    if (enemies.length > 0) {
-                                        targetId = enemies[Math.floor(Math.random() * enemies.length)].id;
+                                    const initialHp = room.config?.initialHp || 50;
+                                    const hpPercent = cpu.hp / initialHp;
+                                    const detailedHand = cpuHand.map(id => CYBER_CARDS.find(c => c.id === id)).filter(Boolean);
+
+                                    let chosenCard = null;
+                                    if (hpPercent < 0.4) {
+                                        chosenCard = detailedHand.find(c => c.type === "HEAL") || 
+                                                     detailedHand.find(c => c.type === "BUFF");
                                     }
-                                    updatedSecret[cpu.id] = { cardId: randomCardId, targetId: targetId };
+                                    if (!chosenCard) {
+                                        chosenCard = detailedHand.find(c => c.type === "ATTACK") ||
+                                                     detailedHand.find(c => c.type === "SABOTAGE") ||
+                                                     detailedHand.find(c => c.type === "ATTACK_MULTI") ||
+                                                     detailedHand.find(c => c.type === "RNG") ||
+                                                     detailedHand[0];
+                                    }
+                                    if (!chosenCard) chosenCard = CYBER_CARDS[0];
+
+                                    const config = getCardTargetConfig(chosenCard);
+                                    let targetIds = [];
+
+                                    if (config.max > 0) {
+                                        let pool = [];
+                                        if (config.allowSelf) pool.push(cpu.id);
+                                        if (config.allowOthers) {
+                                            const enemies = room.players.filter(p => p.id !== cpu.id && p.status !== 'ELIMINATED');
+                                            pool.push(...enemies.map(e => e.id));
+                                        }
+
+                                        for (let t = 0; t < config.max; t++) {
+                                            if (pool.length > 0) {
+                                                const randIdx = Math.floor(Math.random() * pool.length);
+                                                targetIds.push(pool[randIdx]);
+                                                pool.splice(randIdx, 1); // Evita duplicati
+                                            }
+                                        }
+                                    }
+
+                                    updatedSecret[cpu.id] = { cardId: chosenCard.id, targetIds: targetIds };
                                 }
                             });
                             await updateRoom({ "gameData.secretActions": updatedSecret });
@@ -855,12 +945,12 @@
                 }
             }, [isHost, secretActions, revealIndex, room.status]);
 
-            // Reset local submission state when starting a new round
+            // Reset dello stato di sottomissione locale
             useEffect(() => {
                 if (revealIndex === -1 && !secretActions[user.uid]) {
                     setLocalSubmitted(false);
                     setSelectedCardId(null);
-                    setSelectedTargetId(null);
+                    setSelectedTargetIds([]);
                 }
             }, [revealIndex, secretActions]);
 
@@ -868,27 +958,46 @@
                 if (!isAlive || localSubmitted || revealIndex >= 0) return;
                 playSynthSound('click');
                 setSelectedCardId(card.id);
-                setSelectedTargetId(null);
-
-                // Se la mossa non necessita di bersaglio, possiamo impostarla a vuota
-                if (["BUFF", "HEAL", "RNG_ALL", "ATTACK_ALL"].includes(card.type)) {
-                    setSelectedTargetId("");
-                }
+                setSelectedTargetIds([]);
             };
 
             const handleTargetSelect = (targetPlayer) => {
                 if (!selectedCardId || localSubmitted || revealIndex >= 0) return;
                 playSynthSound('click');
-                setSelectedTargetId(targetPlayer.id);
+                
+                const config = getCardTargetConfig(currentSelectedCard);
+                const isSelf = targetPlayer.id === user.uid;
+
+                if (isSelf && !config.allowSelf) {
+                    return; // Ignora se non può colpire se stesso
+                }
+                if (!isSelf && !config.allowOthers) {
+                    return; // Ignora se deve mirare solo se stesso
+                }
+
+                setSelectedTargetIds(prev => {
+                    if (prev.includes(targetPlayer.id)) {
+                        return prev.filter(id => id !== targetPlayer.id);
+                    }
+                    if (config.max === 1) {
+                        return [targetPlayer.id];
+                    } else {
+                        if (prev.length < config.max) {
+                            return [...prev, targetPlayer.id];
+                        }
+                        return prev;
+                    }
+                });
             };
 
             const confirmAction = async () => {
-                if (!selectedCardId || selectedTargetId === null) return;
+                const config = getCardTargetConfig(currentSelectedCard);
+                if (!selectedCardId || selectedTargetIds.length < config.max) return;
                 setLocalSubmitted(true);
                 
                 const updatedSecret = {
                     ...secretActions,
-                    [user.uid]: { cardId: selectedCardId, targetId: selectedTargetId }
+                    [user.uid]: { cardId: selectedCardId, targetIds: selectedTargetIds }
                 };
 
                 await updateRoom({ "gameData.secretActions": updatedSecret });
@@ -900,26 +1009,27 @@
                 let simulatedPlayers = JSON.parse(JSON.stringify(room.players));
                 const currentRound = room.gameData.round || 1;
                 
-                // Mappa i pacchetti azione secretati
                 let rawActions = Object.keys(secretActions).map(playerId => {
                     const p = simulatedPlayers.find(pl => pl.id === playerId);
+                    const act = secretActions[playerId];
+                    const tids = act.targetIds || (act.targetId ? [act.targetId] : []);
                     return {
                         playerId,
                         playerName: p ? p.name : "Giocatore",
                         playerImg: p ? p.img : "",
-                        cardId: secretActions[playerId].cardId,
-                        targetId: secretActions[playerId].targetId
+                        cardId: act.cardId,
+                        targetIds: tids
                     };
                 });
 
-                // Ordine strategico di priorità (Scudi prima, poi cure, sabotaggi e per finire attacchi e RNG)
+                // Ordine strategico di priorità
                 const getPriority = (cardId) => {
                     const card = CYBER_CARDS.find(c => c.id === cardId);
                     if (!card) return 4;
                     if (["BUFF", "BUFF_SELECT"].includes(card.type)) return 1;
                     if (["HEAL"].includes(card.type)) return 2;
                     if (["SABOTAGE"].includes(card.type)) return 3;
-                    return 4; // Attacchi e Caos
+                    return 4;
                 };
 
                 rawActions.sort((a, b) => getPriority(a.cardId) - getPriority(b.cardId));
@@ -927,44 +1037,43 @@
                 let actionTimeline = [];
                 let resolvedLogAccumulator = "";
 
-                // Esegui la simulazione per creare la timeline decisa dell'Host
                 rawActions.forEach((act) => {
                     const attacker = simulatedPlayers.find(p => p.id === act.playerId);
-                    if (!attacker || attacker.status === 'ELIMINATED') return; // Giocatore morto prima della mossa
+                    if (!attacker || attacker.status === 'ELIMINATED') return;
 
                     const card = CYBER_CARDS.find(c => c.id === act.cardId);
                     if (!card) return;
 
-                    let logMsg = `${attacker.name} lancia [${card.name}]`;
-                    let targetPlayer = simulatedPlayers.find(p => p.id === act.targetId);
+                    let targetPlayers = act.targetIds.map(tid => simulatedPlayers.find(p => p.id === tid)).filter(Boolean);
+                    let targetsText = targetPlayers.map(tp => tp.name).join(" e ");
 
-                    if (targetPlayer) {
-                        logMsg += ` su ${targetPlayer.name}. `;
+                    let logMsg = `${attacker.name} lancia [${card.name}]`;
+                    if (targetPlayers.length > 0) {
+                        logMsg += ` su ${targetsText}.\n🔍 Effetto Carta: ${card.desc}\n▶️ Esito: `;
                     } else {
-                        logMsg += `. `;
+                        logMsg += `.\n🔍 Effetto Carta: ${card.desc}\n▶️ Esito: `;
                     }
 
-                    // Controlla se l'attaccante soffre per Rete di Spine attiva
                     if (attacker.spineRounds > 0) {
                         attacker.hp = Math.max(0, attacker.hp - 2);
                         attacker.spineRounds--;
-                        logMsg += `(Rete di Spine punisce ${attacker.name} con -2 HP! Rimangono ${attacker.spineRounds} round) `;
+                        logMsg += `⚠️ [MALUS SPINE] ${attacker.name} subisce 2 danni extra per aver eseguito un'azione mentre era bloccato da Rete di Spine! (Spine residue: ${attacker.spineRounds} round).\n`;
                     }
 
                     const dealDamage = (target, amount, incontestable = false) => {
                         if (target.invulnerable && !incontestable) {
-                            logMsg += `[BLOCCATO!] Lo scudo di ${target.name} assorbe interamente il colpo! `;
+                            logMsg += `🛡️ [SCUDO] Lo scudo di ${target.name} assorbe interamente l'attacco! `;
                             return 0;
                         }
                         if (target.reflected && !incontestable) {
                             attacker.hp = Math.max(0, attacker.hp - amount);
                             target.reflected = false;
-                            logMsg += `[RIFLESSO!] Lo Scudo a Specchio di ${target.name} devia il danno interamente su ${attacker.name}! `;
+                            logMsg += `🪞 [RIFLESSIONE] Lo Scudo a Specchio di ${target.name} devia interamente l'attacco e riflette i ${amount} danni indietro su ${attacker.name}! `;
                             return 0;
                         }
                         target.hp = Math.max(0, target.hp - amount);
                         attacker.score = (attacker.score || 0) + amount;
-                        logMsg += `Infligge ${amount} danni a ${target.name}. `;
+                        logMsg += `Colpito! Infligge ${amount} danni a ${target.name}. `;
                         return amount;
                     };
 
@@ -972,34 +1081,34 @@
                         const max = room.config?.initialHp || 50;
                         const oldHp = target.hp;
                         target.hp = Math.min(max, target.hp + amount);
-                        logMsg += `Recupera +${target.hp - oldHp} HP. `;
+                        logMsg += `Cura applicata su ${target.name}: +${target.hp - oldHp} HP (HP attuali: ${target.hp}/${max}). `;
                     };
 
-                    // Implementazione degli effetti delle 24 carte elette
                     switch (card.id) {
                         case 1: // Plasma Laser
-                            if (targetPlayer) dealDamage(targetPlayer, 6);
+                            if (targetPlayers[0]) dealDamage(targetPlayers[0], 6);
                             break;
                         case 2: // Sanguisuga Digitale
-                            if (targetPlayer) {
-                                const actualDmg = dealDamage(targetPlayer, 4);
+                            if (targetPlayers[0]) {
+                                const actualDmg = dealDamage(targetPlayers[0], 4);
                                 if (actualDmg > 0) heal(attacker, 4);
                             }
                             break;
                         case 3: // Colpo Critico 404
-                            if (targetPlayer) {
+                            if (targetPlayers[0]) {
                                 if (Math.random() > 0.5) {
-                                    dealDamage(targetPlayer, 10);
+                                    dealDamage(targetPlayers[0], 10);
+                                    logMsg += "🔥 COLPO CRITICO!";
                                 } else {
-                                    logMsg += "FALLITO! Il software crasha, nessun danno inflitto.";
+                                    logMsg += "❌ ERRORE 404! Il colpo è fallito.";
                                 }
                             }
                             break;
                         case 4: // Cannone a Risonanza
-                            if (targetPlayer) {
-                                dealDamage(targetPlayer, 5);
+                            if (targetPlayers[0]) {
+                                dealDamage(targetPlayers[0], 5);
                                 const aliveIndices = simulatedPlayers.map((p, idx) => p.status !== 'ELIMINATED' ? idx : null).filter(idx => idx !== null);
-                                const currentTargetPos = simulatedPlayers.findIndex(p => p.id === targetPlayer.id);
+                                const currentTargetPos = simulatedPlayers.findIndex(p => p.id === targetPlayers[0].id);
                                 const alivePos = aliveIndices.indexOf(currentTargetPos);
                                 
                                 const prevIndex = aliveIndices[(alivePos - 1 + aliveIndices.length) % aliveIndices.length];
@@ -1014,16 +1123,15 @@
                             }
                             break;
                         case 5: // Overclock Offensivo
-                            if (targetPlayer) {
+                            if (targetPlayers[0]) {
                                 attacker.hp = Math.max(0, attacker.hp - 3);
-                                logMsg += `Sacrifica 3 HP. `;
-                                dealDamage(targetPlayer, 8);
+                                dealDamage(targetPlayers[0], 8);
                             }
                             break;
                         case 6: // Algoritmo Mietitore
-                            if (targetPlayer) {
-                                const handSize = targetPlayer.hand ? targetPlayer.hand.length : 3;
-                                dealDamage(targetPlayer, handSize * 2);
+                            if (targetPlayers[0]) {
+                                const handSize = targetPlayers[0].hand ? targetPlayers[0].hand.length : 3;
+                                dealDamage(targetPlayers[0], handSize * 2);
                             }
                             break;
                         case 7: // Sisma Elettronico
@@ -1036,102 +1144,98 @@
                                     }
                                 }
                             });
-                            logMsg += "Terremoto elettrico totale! Tutti subiscono 1 danno e rimescolano 1 carta.";
+                            logMsg += "⚡ Sisma globale! Tutti subiscono 1 danno e rimescolano una carta.";
                             break;
                         case 8: // Rete di Spine
-                            if (targetPlayer) {
-                                dealDamage(targetPlayer, 2);
-                                targetPlayer.spineRounds = (targetPlayer.spineRounds || 0) + 2;
-                                logMsg += `Applica Malus Spine per 2 turni. `;
+                            if (targetPlayers[0]) {
+                                dealDamage(targetPlayers[0], 2);
+                                targetPlayers[0].spineRounds = (targetPlayers[0].spineRounds || 0) + 2;
                             }
                             break;
                         case 9: // Pugno in Faccia
-                            if (targetPlayer) dealDamage(targetPlayer, 3, true); // Ignora scudi passivi e specchi!
-                            break;
-                        case 10: // Sciame di Vespe
-                            const targetsAlive = simulatedPlayers.filter(p => p.status !== 'ELIMINATED');
-                            const chosen = [];
-                            for (let i = 0; i < 3; i++) {
-                                if (targetsAlive.length > 0) {
-                                    const pickIdx = Math.floor(Math.random() * targetsAlive.length);
-                                    dealDamage(targetsAlive[pickIdx], 2);
-                                    chosen.push(targetsAlive[pickIdx].name);
-                                    targetsAlive.splice(pickIdx, 1);
-                                }
+                            if (targetPlayers[0]) {
+                                dealDamage(targetPlayers[0], 3, true); 
                             }
-                            logMsg += `Sciame colpisce casualmente: ${chosen.join(', ')}.`;
+                            break;
+                        case 10: // Sciame di Vespe (MANUALE MULTI-TARGET!)
+                            targetPlayers.forEach(tp => {
+                                dealDamage(tp, 4);
+                            });
                             break;
                         case 11: // Calcio
-                            if (targetPlayer) {
-                                targetPlayer.invulnerable = false;
-                                targetPlayer.reflected = false;
-                                logMsg += `Frantuma ogni barriera protettiva di ${targetPlayer.name}! `;
-                                dealDamage(targetPlayer, 3);
+                            if (targetPlayers[0]) {
+                                targetPlayers[0].invulnerable = false;
+                                targetPlayers[0].reflected = false;
+                                dealDamage(targetPlayers[0], 3);
                             }
                             break;
                         case 12: // Firewall Laser
                             attacker.invulnerable = true;
+                            logMsg += "🛡️ Firewall avviato per se stesso!";
                             break;
                         case 13: // Scudo a Specchio
                             attacker.reflected = true;
+                            logMsg += "🪞 Scudo specchio installato!";
                             break;
                         case 14: // Nano-Iniezione
-                            heal(attacker, 8);
+                            {
+                                const toHeal = targetPlayers[0] || attacker;
+                                heal(toHeal, 8);
+                            }
                             break;
                         case 15: // Patch di Sicurezza
-                            heal(attacker, 5);
-                            attacker.spineRounds = 0;
-                            attacker.skipNextTurn = false;
-                            logMsg += "Rimuove ogni stato alterato negativo.";
+                            {
+                                const toHeal = targetPlayers[0] || attacker;
+                                heal(toHeal, 5);
+                                toHeal.spineRounds = 0;
+                                toHeal.skipNextTurn = false;
+                            }
                             break;
                         case 16: // Barriera Condivisa
                             attacker.invulnerable = true;
-                            if (targetPlayer) targetPlayer.invulnerable = true;
+                            if (targetPlayers[0]) {
+                                targetPlayers[0].invulnerable = true;
+                            }
                             break;
                         case 17: // Rigeneratore di Celle
                             attacker.regenTurns = (attacker.regenTurns || 0) + 4;
-                            logMsg += `Avvia rigenerazione nanotecnologica. `;
                             break;
                         case 18: // DDoS Attack
-                            if (targetPlayer) {
-                                targetPlayer.skipNextTurn = true;
-                                logMsg += `Bloccherà il prossimo turno di ${targetPlayer.name}. `;
+                            if (targetPlayers[0]) {
+                                targetPlayers[0].skipNextTurn = true;
                             }
                             break;
                         case 19: // Riavvio Forzato
-                            if (targetPlayer) {
-                                targetPlayer.hand = [Math.ceil(Math.random()*24), Math.ceil(Math.random()*24), Math.ceil(Math.random()*24)];
-                                logMsg += `Svuota e riavvia l'interfaccia di ${targetPlayer.name}. `;
+                            if (targetPlayers[0]) {
+                                targetPlayers[0].hand = [Math.ceil(Math.random()*24), Math.ceil(Math.random()*24), Math.ceil(Math.random()*24)];
                             }
                             break;
                         case 20: // Keylogger
-                            if (targetPlayer) {
-                                targetPlayer.keyloggedBy = attacker.id;
-                                targetPlayer.keylogTimer = 2;
-                                logMsg += `Inietta spia digitale per 2 round. `;
+                            if (targetPlayers[0]) {
+                                targetPlayers[0].keyloggedBy = attacker.id;
+                                targetPlayers[0].keylogTimer = 2;
                             }
                             break;
                         case 21: // Roulette Russa
-                            if (targetPlayer) {
+                            if (targetPlayers[0]) {
                                 if (Math.random() > 0.5) {
-                                    dealDamage(targetPlayer, 10);
-                                    logMsg += "Il colpo colpisce il bersaglio.";
+                                    dealDamage(targetPlayers[0], 10);
                                 } else {
                                     attacker.hp = Math.max(0, attacker.hp - 5);
-                                    logMsg += "Sfortuna! Il colpo esplode all'indietro (-5 HP).";
+                                    logMsg += "💥 Autolesione! Chi lo lancia subisce 5 danni.";
                                 }
                             }
                             break;
                         case 22: // Tempesta EMP
-                            logMsg += "La tempesta disattiva le interfacce olografiche per il round corrente.";
+                            logMsg += "🌀 Tempesta EMP globale attiva!";
                             break;
                         case 23: // Ira dei Pincher
                             const aliveForPincher = simulatedPlayers.filter(p => p.status !== 'ELIMINATED');
                             const effects = [
-                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; dealDamage(p, 5); logMsg += `[Artiglio] 5 danni a ${p.name}. `; },
-                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; if(p.hand) p.hand.splice(Math.floor(Math.random() * p.hand.length), 1); p.hand.push(Math.ceil(Math.random()*24)); logMsg += `[Morso] scarto di carta a ${p.name}. `; },
-                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; heal(p, 3); logMsg += `[Cura] +3 HP a ${p.name}. `; },
-                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; dealDamage(p, 3); logMsg += `[Ringhio] 3 danni a ${p.name}. `; }
+                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; dealDamage(p, 5); },
+                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; if(p.hand) p.hand.splice(Math.floor(Math.random() * p.hand.length), 1); p.hand.push(Math.ceil(Math.random()*24)); },
+                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; heal(p, 3); },
+                                () => { const p = aliveForPincher[Math.floor(Math.random() * aliveForPincher.length)]; dealDamage(p, 3); }
                             ];
                             effects.forEach(f => f());
                             break;
@@ -1143,28 +1247,25 @@
                                 const temp = richest.hp;
                                 richest.hp = poorest.hp;
                                 poorest.hp = temp;
-                                logMsg += `HP scambiati tra ${richest.name} e ${poorest.name}!`;
                             }
                             break;
                     }
 
-                    // Gestione decesso
                     simulatedPlayers.forEach(p => {
                         if (p.hp <= 0 && p.status !== 'ELIMINATED') {
                             p.hp = 0;
                             p.status = 'ELIMINATED';
                             p.eliminatedRound = currentRound;
-                            logMsg += `\n💀 ${p.name} è stato SCOLLEGATO!`;
+                            logMsg += `\n💀 ${p.name} è crashato definitivamente!`;
                         }
                     });
 
-                    // Registra l'azione e la salute di tutti i giocatori in questo istante della timeline
                     actionTimeline.push({
                         playerId: act.playerId,
                         playerName: act.playerName,
                         playerImg: act.playerImg,
                         cardId: act.cardId,
-                        targetId: act.targetId,
+                        targetIds: act.targetIds,
                         resolvedText: logMsg,
                         stateSnapshot: JSON.parse(JSON.stringify(simulatedPlayers))
                     });
@@ -1172,7 +1273,6 @@
                     resolvedLogAccumulator += logMsg + "\n";
                 });
 
-                // Rimuovi le carte usate dalle mani dei giocatori e pescane di nuove solo se esaurite del tutto
                 simulatedPlayers.forEach(p => {
                     if (p.status !== 'ELIMINATED') {
                         const originalPlayer = room.players.find(op => op.id === p.id);
@@ -1180,9 +1280,8 @@
                         
                         if (usedCardId && originalPlayer) {
                             p.hand = (originalPlayer.hand || []).filter(id => id !== usedCardId);
-                            // Ricarica la mano a 3 carte solo ed esclusivamente se è vuota!
                             if (p.hand.length === 0) {
-                                while (p.hand.length < 3) {
+                                while (p.hand.length < 5) {
                                     p.hand.push(Math.ceil(Math.random() * 24));
                                 }
                             }
@@ -1190,7 +1289,6 @@
                     }
                 });
 
-                // Salva lo stato elaborato e avvia la proiezione sequenziale
                 await updateRoom({
                     "gameData.orderedActions": actionTimeline,
                     "gameData.revealIndex": 0,
@@ -1205,11 +1303,9 @@
                 if (nextIdx < orderedActions.length) {
                     await updateRoom({ "gameData.revealIndex": nextIdx });
                 } else {
-                    // Tutti i reveal sono terminati, concludiamo il turno
                     let finalPlayers = [...room.gameData.simulatedPlayersState];
                     let currentRound = room.gameData.round || 1;
                     
-                    // Gestione scadenze scudi e rigenerazioni per il round successivo
                     finalPlayers.forEach(p => {
                         if (p.status !== 'ELIMINATED') {
                             if (p.invulnerable) p.invulnerable = false;
@@ -1238,7 +1334,17 @@
                         winnerId = survivors[0]?.id || null;
                     }
 
-                    // Reset per il prossimo round
+                    let rotationMessage = "";
+                    if (nextStatus === 'PLAYING' && (nextRound - 1) % 3 === 0) {
+                        const getRandomCardId = () => Math.ceil(Math.random() * 24);
+                        finalPlayers.forEach(p => {
+                            if (p.status !== 'ELIMINATED') {
+                                p.hand = [getRandomCardId(), getRandomCardId(), getRandomCardId(), getRandomCardId(), getRandomCardId()];
+                            }
+                        });
+                        rotationMessage = " 🌀 ROTAZIONE MAZZO: Carte rigenerate!";
+                    }
+
                     await updateRoom({
                         players: finalPlayers,
                         status: nextStatus,
@@ -1247,22 +1353,33 @@
                         "gameData.secretActions": {},
                         "gameData.orderedActions": [],
                         "gameData.round": nextRound,
-                        "gameData.lastAction": `Il Round ${currentRound} si è concluso con successo. Caricamento prossimo round olografico.`
+                        "gameData.lastAction": `Il Round ${currentRound} si è concluso.${rotationMessage}`
                     });
                 }
             };
 
             const currentRevealAction = orderedActions[revealIndex];
             const allSubmitted = Object.keys(secretActions).length === alivePlayers.length;
+            const targetConfig = currentSelectedCard ? getCardTargetConfig(currentSelectedCard) : { max: 0, allowSelf: false, allowOthers: false };
+            const targetsNeeded = targetConfig.max - selectedTargetIds.length;
+            const canConfirm = targetsNeeded === 0;
 
             return (
                 <div className="flex flex-col items-center gap-6 w-full max-w-4xl font-mono">
-                    {/* TITOLO PRINCIPALE */}
                     <div className="text-2xl md:text-3xl font-bold text-center text-cyan-400 flex items-center gap-2 uppercase tracking-widest animate-pulse">
-                        <BookOpen size={32} /> Mazzo Cybernetico (Pianificazione Simultanea)
+                        <BookOpen size={32} /> Mazzo Cybernetico (Pianificazione)
                     </div>
 
-                    {/* SCHERMATA DI RIVELAZIONE SEQUENZIALE (MODO SUSPANCE ATTIVO) */}
+                    <div className="w-full bg-[#111122]/90 border border-cyan-500/30 rounded-xl p-3 flex items-center justify-between shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg animate-spin" style={{ animationDuration: '6s' }}>🌀</span>
+                            <div className="text-left">
+                                <div className="text-[10px] text-cyan-400 uppercase tracking-widest font-bold">Rotazione Mainframe</div>
+                                <div className="text-xs text-gray-300">Nuove carte tra {roundsUntilNextRotation} round</div>
+                            </div>
+                        </div>
+                    </div>
+
                     {revealIndex >= 0 ? (
                         <div className="w-full bg-[#0a0a16] border-2 border-cyan-500 rounded-2xl p-6 shadow-[0_0_35px_rgba(6,182,212,0.4)] relative overflow-hidden scanlines flex flex-col items-center">
                             <div className="absolute top-2 right-4 text-xs text-cyan-500 font-bold tracking-widest animate-pulse">
@@ -1273,7 +1390,6 @@
                                 📡 Decrittografia Segnale Net_
                             </h3>
 
-                            {/* Pannello d'azione olografico cinematografico */}
                             {currentRevealAction && (
                                 <div className="flex flex-col items-center text-center w-full max-w-2xl bg-white/5 p-6 rounded-xl border border-cyan-500/30 animate-rise">
                                     <div className="flex items-center gap-4 mb-4">
@@ -1288,7 +1404,6 @@
                                         </div>
                                     </div>
 
-                                    {/* Dettagli della carta giocata */}
                                     <div className="bg-cyan-950/40 p-4 rounded-xl border border-cyan-500/20 w-full mb-6 max-w-lg">
                                         <div className="text-3xl mb-1">
                                             {CYBER_CARDS.find(c => c.id === currentRevealAction.cardId)?.icon || "🃏"}
@@ -1301,48 +1416,56 @@
                                         </div>
                                     </div>
 
-                                    {/* Risoluzione testuale in tempo reale */}
                                     <div className="text-lg text-white font-mono leading-relaxed bg-black/60 p-4 rounded border border-white/5 w-full text-left whitespace-pre-line min-h-[80px]">
-                                        {currentRevealAction.resolvedText}
+                                        {renderTextWithAvatars(currentRevealAction.resolvedText)}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Visualizzatore HP del snapshot corrente */}
                             <div className="w-full mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                {currentRevealAction?.stateSnapshot?.map((p, idx) => (
-                                    <div key={idx} className={`p-2 rounded-lg glass-panel text-center transition-all ${p.status === 'ELIMINATED' ? 'opacity-30 grayscale' : ''}`}>
-                                        <div className="text-xs font-bold truncate">{p.name}</div>
-                                        <div className="w-full bg-gray-800 h-2.5 rounded-full overflow-hidden mt-1">
-                                            <div 
-                                                className="bg-red-500 h-full transition-all duration-500" 
-                                                style={{ width: `${Math.min(100, (p.hp / (room.config?.initialHp || 50)) * 100)}%` }}
-                                            />
+                                {currentRevealAction?.stateSnapshot?.map((p, idx) => {
+                                    let prevHp = room.config?.initialHp || 50;
+                                    if (revealIndex > 0) {
+                                        const prevSnapshot = orderedActions[revealIndex - 1]?.stateSnapshot;
+                                        const prevPlayerState = prevSnapshot?.find(pl => pl.id === p.id);
+                                        if (prevPlayerState) prevHp = prevPlayerState.hp;
+                                    } else {
+                                        const originalPlayer = room.players.find(pl => pl.id === p.id);
+                                        if (originalPlayer) prevHp = originalPlayer.hp;
+                                    }
+                                    const hpDiff = p.hp - prevHp;
+
+                                    return (
+                                        <div key={idx} className={`p-2 rounded-lg glass-panel text-center transition-all flex flex-col items-center relative ${p.status === 'ELIMINATED' ? 'opacity-30 grayscale' : ''}`}>
+                                            <img src={p.img} className="w-10 h-10 rounded-full object-cover mb-1 border border-cyan-500/50" onError={(e) => e.target.src='https://placehold.co/40'} />
+                                            <div className="text-xs font-bold truncate max-w-full">{p.name}</div>
+                                            <div className="w-full bg-gray-800 h-2.5 rounded-full overflow-hidden mt-1">
+                                                <div className="bg-red-500 h-full transition-all duration-500" style={{ width: `${Math.min(100, (p.hp / (room.config?.initialHp || 50)) * 100)}%` }} />
+                                            </div>
+                                            <div className="text-[11px] text-gray-300 mt-1 flex items-center gap-1 justify-center font-bold">
+                                                <span>HP: {p.hp}</span>
+                                                {hpDiff !== 0 && (
+                                                    <span className={`text-[11px] font-extrabold ${hpDiff < 0 ? 'text-red-500 animate-pulse' : 'text-green-400'}`}>
+                                                        ({hpDiff < 0 ? '' : '+'}{hpDiff})
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="text-[10px] text-gray-400 mt-1">HP: {p.hp}</div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
-                            {/* CONTROLLI DEL REVEAL (SOLO PER L'HOST) */}
                             {isHost && (
                                 <button 
                                     onClick={nextReveal}
-                                    className="mt-8 bg-green-600 hover:bg-green-500 text-white font-bold px-10 py-4 rounded-xl text-lg transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(34,197,94,0.4)] flex items-center gap-2"
+                                    className="mt-8 bg-green-600 hover:bg-green-500 text-white font-bold px-10 py-4 rounded-xl text-lg transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(34,197,94,0.4)]"
                                 >
                                     {revealIndex + 1 < orderedActions.length ? "ANALIZZA PROSSIMA AZIONE 📡" : "COMPLETA TURNO E APPLICA STATI ⚡"}
                                 </button>
                             )}
-                            {!isHost && (
-                                <div className="mt-8 text-cyan-400 text-sm animate-pulse uppercase tracking-widest font-bold">
-                                    Scansione del mainframe dell'Host in corso...
-                                </div>
-                            )}
                         </div>
                     ) : (
-                        /* SCHERMATA DI PIANIFICAZIONE DELLE MOSSE */
                         <div className="w-full flex flex-col items-center gap-6">
-                            {/* Pannello di stato delle prenotazioni degli altri giocatori */}
                             <div className="w-full glass-panel p-4 rounded-xl border border-cyan-500/30">
                                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 text-center">
                                     Stato Collegamenti Network
@@ -1351,28 +1474,36 @@
                                     {room.players.map((p, i) => {
                                         const submitted = !!secretActions[p.id];
                                         const isCurr = p.id === user.uid;
+                                        const isSelected = selectedTargetIds.includes(p.id);
+                                        const isSelfTarget = isCurr && targetConfig.allowSelf;
+                                        const isEnemyTarget = !isCurr && targetConfig.allowOthers;
+                                        const isValidTarget = selectedCardId && !localSubmitted && p.status !== 'ELIMINATED' && (isSelfTarget || isEnemyTarget);
+
                                         return (
                                             <div 
                                                 key={i} 
-                                                onClick={() => !localSubmitted && selectedCardId && p.status !== 'ELIMINATED' && handleTargetSelect(p)}
-                                                className={`p-3 rounded-lg flex flex-col items-center border transition-all relative
-                                                    ${isCurr ? 'bg-cyan-500/10 border-cyan-500' : 'bg-black/30 border-white/5'}
+                                                onClick={() => isValidTarget && handleTargetSelect(p)}
+                                                className={`p-3 rounded-lg flex flex-col items-center border transition-all relative select-none
+                                                    ${isCurr ? 'bg-cyan-500/10 border-cyan-500/40' : 'bg-black/30 border-white/5'}
                                                     ${p.status === 'ELIMINATED' ? 'opacity-30 grayscale' : ''}
-                                                    ${selectedTargetId === p.id ? 'ring-2 ring-red-500 scale-105' : ''}
-                                                    ${!localSubmitted && selectedCardId && p.id !== user.uid && p.status !== 'ELIMINATED' ? 'cursor-pointer hover:border-red-500 hover:scale-105 animate-pulse' : ''}
+                                                    ${isSelected ? 'ring-4 ring-red-500 scale-105 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : ''}
+                                                    ${isValidTarget ? 'cursor-pointer hover:border-red-500 hover:scale-105' : ''}
                                                 `}
                                             >
-                                                <img src={p.img} className="w-10 h-10 rounded-full mb-2 object-cover" onError={(e) => e.target.src='https://placehold.co/40'}/>
-                                                <span className="text-[10px] font-bold truncate w-full text-center">{p.name}</span>
-                                                
-                                                {/* Badge di stato caricamento software */}
-                                                {p.status !== 'ELIMINATED' && (
-                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded mt-1.5 uppercase font-bold tracking-wider ${submitted ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 animate-pulse'}`}>
-                                                        {submitted ? "Software Ready 🔒" : "Hacking..."}
+                                                {/* Badge d'ordine di selezione se multi-target */}
+                                                {isSelected && targetConfig.max > 1 && (
+                                                    <span className="absolute top-1 left-1 bg-red-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-md z-10 animate-bounce">
+                                                        {selectedTargetIds.indexOf(p.id) + 1}
                                                     </span>
                                                 )}
-                                                {p.status === 'ELIMINATED' && (
-                                                    <span className="text-[9px] text-red-500 font-bold uppercase mt-1">Scollegato</span>
+
+                                                <img src={p.img} className="w-10 h-10 rounded-full mb-2 object-cover" onError={(e) => e.target.src='https://placehold.co/40'}/>
+                                                <span className="text-[10px] font-bold truncate w-full text-center">{p.name} {isCurr ? "(Tu)" : ""}</span>
+                                                
+                                                {p.status !== 'ELIMINATED' && (
+                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded mt-1.5 uppercase font-bold tracking-wider ${submitted ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'}`}>
+                                                        {submitted ? "Pronto 🔒" : "Sceglie..."}
+                                                    </span>
                                                 )}
                                             </div>
                                         );
@@ -1380,18 +1511,16 @@
                                 </div>
                             </div>
 
-                            {/* MANO DEL GIOCATORE (SE ANCORA VIVO) */}
                             {isAlive ? (
                                 <div className="w-full mt-4 flex flex-col items-center">
                                     <h3 className="text-lg font-bold mb-3 text-cyan-400 uppercase tracking-widest text-center">
-                                        {localSubmitted ? "Software caricato con successo!" : "Seleziona un Programma Neon e un Bersaglio:"}
+                                        {localSubmitted ? "Software caricato con successo!" : "Seleziona un Programma Neon ed eventuali Bersagli:"}
                                     </h3>
 
                                     {!localSubmitted ? (
                                         <div className="w-full flex flex-col items-center gap-6">
-                                            {/* Griglia flessibile di carte in mano (centrate dinamicamente) */}
-                                            <div className="flex flex-wrap justify-center gap-4 max-w-2xl w-full">
-                                                {(myPlayer.hand || []).slice(0, 3).map((cardId, index) => {
+                                            <div className="flex flex-wrap justify-center gap-4 max-w-4xl w-full">
+                                                {(myPlayer.hand || []).slice(0, 5).map((cardId, index) => {
                                                     const card = CYBER_CARDS.find(c => c.id === cardId);
                                                     if (!card) return null;
                                                     const isSelected = selectedCardId === card.id;
@@ -1400,16 +1529,16 @@
                                                         <div 
                                                             key={index} 
                                                             onClick={() => handleCardClick(card)}
-                                                            className={`cyber-card flex flex-col p-4 rounded-xl border-2 text-center select-none min-h-[160px] w-48 justify-between relative transition-all duration-300
+                                                            className={`cyber-card flex flex-col p-4 rounded-xl border-2 text-center select-none min-h-[160px] w-40 justify-between relative transition-all duration-300
                                                                 ${card.color}
                                                                 ${isSelected ? 'ring-4 ring-cyan-400 scale-105 shadow-[0_0_20px_rgba(6,182,212,0.6)]' : ''}
                                                             `}
                                                         >
-                                                            <div className="text-3xl">{card.icon}</div>
-                                                            <div className="font-bold text-sm tracking-wide mt-1 uppercase">
+                                                            <div className="text-2xl">{card.icon}</div>
+                                                            <div className="font-bold text-xs tracking-wide mt-1 uppercase truncate">
                                                                 {card.name}
                                                             </div>
-                                                            <div className="text-[10px] opacity-80 mt-2 leading-tight">
+                                                            <div className="text-[9px] opacity-80 mt-2 leading-tight">
                                                                 {card.desc}
                                                             </div>
                                                         </div>
@@ -1417,17 +1546,22 @@
                                                 })}
                                             </div>
 
-                                            {/* Bottone di conferma azione */}
                                             {selectedCardId && (
                                                 <div className="flex flex-col items-center gap-2 animate-rise">
-                                                    <div className="text-sm text-yellow-400 font-bold uppercase">
-                                                        {selectedTargetId === "" ? "Pronto all'uso autonomo!" : selectedTargetId ? "Bersaglio agganciato!" : "Seleziona un bersaglio cliccando sulla sua scheda in alto!"}
+                                                    <div className="text-sm text-yellow-400 font-bold uppercase text-center max-w-md">
+                                                        {targetConfig.max === 0 ? (
+                                                            "⚡ Pronto all'uso globale/autonomo! Nessun bersaglio richiesto."
+                                                        ) : targetsNeeded > 0 ? (
+                                                            `🎯 Seleziona ${targetsNeeded} bersagli cliccando sui giocatori in alto! ${targetConfig.allowSelf ? "(Puoi cliccare anche su di te!)" : ""}`
+                                                        ) : (
+                                                            "🔒 Bersagli agganciati! Pronto a caricare sul server."
+                                                        )}
                                                     </div>
                                                     <button 
                                                         onClick={confirmAction}
-                                                        disabled={selectedTargetId === null}
+                                                        disabled={!canConfirm}
                                                         className={`px-8 py-3 rounded-xl font-bold text-lg uppercase transition-all transform hover:scale-105
-                                                            ${selectedTargetId !== null ? 'bg-cyan-500 hover:bg-cyan-400 text-black shadow-[0_0_20px_rgba(6,182,212,0.5)]' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}
+                                                            ${canConfirm ? 'bg-cyan-500 hover:bg-cyan-400 text-black shadow-[0_0_20px_rgba(6,182,212,0.5)]' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}
                                                         `}
                                                     >
                                                         Carica software nel server 📤
@@ -1438,26 +1572,25 @@
                                     ) : (
                                         <div className="p-8 glass-panel border border-green-500/30 rounded-xl text-center flex flex-col items-center max-w-md">
                                             <span className="text-4xl animate-bounce mb-2">💾</span>
-                                            <div className="text-green-400 font-bold uppercase tracking-widest text-lg">Programma in attesa di decrittografia</div>
+                                            <div className="text-green-400 font-bold uppercase tracking-widest text-lg">Programma in coda di scansione</div>
                                             <div className="text-xs text-gray-400 mt-2 font-serif">
-                                                Il tuo attacco [{CYBER_CARDS.find(c => c.id === selectedCardId)?.name}] è pronto. Attendi che tutti carichino le proprie mosse sul server centrale per dare il via alla proiezione olografica!
+                                                In attesa che tutti abbiano pianificato i propri segnali olografici...
                                             </div>
                                         </div>
                                     )}
                                 </div>
                             ) : (
                                 <div className="text-center py-6 text-red-500 animate-pulse uppercase tracking-widest font-bold">
-                                    💀 Sei stato disconnesso dal mainframe! Puoi solo assistere allo scontro.
+                                    💀 Sei stato disconnesso dal mainframe!
                                 </div>
                             )}
 
-                            {/* CONTROLLER ATTIVAZIONE REVEAL GENERALE (HOST ONLY) */}
                             {isHost && (
                                 <div className="mt-8 border-t border-white/10 pt-6 w-full flex flex-col items-center">
                                     {allSubmitted ? (
                                         <button 
                                             onClick={resolveAllActionsAndStartReveal}
-                                            className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-10 py-5 rounded-2xl text-xl transition-all transform hover:scale-110 shadow-[0_0_30px_rgba(147,51,234,0.6)] animate-bounce"
+                                            className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-10 py-5 rounded-2xl text-xl transition-all transform hover:scale-110 shadow-[0_0_30px_rgba(147,51,234,0.6)]"
                                         >
                                             📡 AVVIA SCANSIONE OLOGRAFICA DEL ROUND! 📡
                                         </button>
@@ -2447,8 +2580,8 @@
                     skipNextTurn: false,
                     keyloggedBy: null,
                     keylogTimer: 0,
-                    // Distribuisce 3 carte casuali a tutti all'inizio
-                    hand: [getRandomCardId(), getRandomCardId(), getRandomCardId()]
+                    // Distribuisce 5 carte casuali a tutti all'inizio
+                    hand: [getRandomCardId(), getRandomCardId(), getRandomCardId(), getRandomCardId(), getRandomCardId()]
                 }));
 
                 if(room.selectedGame === 'CLICK_RACE') {
